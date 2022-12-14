@@ -73,6 +73,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
         super.init()
 
         self.createNativeView(view: self.view())
+
         self.eventChannel.setStreamHandler(self.imageStreamHandler)
         self.methodChannel.setMethodCallHandler({
             (call, result) in
@@ -110,10 +111,15 @@ class FLNativeView: NSObject, FlutterPlatformView {
             }
             // iOS views can be created here
             try? self.scannerController?.displayPreview(on: self.previewView)
+            self.notifyAboutInitDone()
 
         }
 
 
+    }
+
+    private func notifyAboutInitDone() {
+        self.methodChannel.invokeMethod("initDone", arguments: nil)
     }
 
 

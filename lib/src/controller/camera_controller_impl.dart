@@ -6,6 +6,7 @@ import 'package:cv_camera/src/controller/camera_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image/image.dart';
 import 'package:isolate_handler/isolate_handler.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -61,6 +62,8 @@ class CameraControllerImpl implements CameraController {
             ),
           );
           break;
+        case "initDone":
+          await _onInitDone();
       }
     });
   }
@@ -125,7 +128,12 @@ class CameraControllerImpl implements CameraController {
         join(temporaryDirPath, '${clock.now().millisecondsSinceEpoch}.jpg'));
     await imageFile.create(recursive: true);
 
-    final path = (await imageFile.writeAsBytes(image.getBytes())).path;
+    final decodedImage = decodeImage(image.getBytes().toList());
+    if (decodedImage == null) {
+      throw Exception("Could not decode image");
+    }
+    final encoded = JpegEncoder().encodeImage(decodedImage);
+    final path = (await imageFile.writeAsBytes(encoded)).path;
     final decoded =
         TakePictureResult.fromJson(response..addAll({'path': path}));
 
@@ -155,7 +163,7 @@ class CameraControllerImpl implements CameraController {
   final Completer readyCompleter = Completer();
 
   @override
-  Future<void> ready() async {
+  Future<void> _onInitDone() async {
     if (initialized) return;
     await _init();
     readyCompleter.complete();

@@ -37,8 +37,6 @@ class _CameraPreviewState extends State<CameraPreview> {
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: (id) {
             print('created platform view with id $id');
-            // Notify that the platform view is ready and that the method channel has been created on the platform side
-            widget.controller.ready();
           },
         ),
         if (widget.overlay != null) widget.overlay!

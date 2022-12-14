@@ -13,11 +13,12 @@ dependencies:
   freezed_annotation: ^2.2.0
   plugin_platform_interface: ^2.0.2
   isolate_handler:
-    path: ../isolate_handler
+    git: https://github.com/JulianHartl/isolate_handler
   json_annotation: ^4.7.0
   path_provider: ^2.0.11
   clock: ^1.1.1
   path: ^1.8.2
+  image: ^3.2.2
 
 dev_dependencies:
   flutter_test:

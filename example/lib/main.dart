@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cv_camera/cv_camera.dart';
 import 'package:flutter/material.dart';
 
@@ -35,33 +37,42 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: SafeArea(
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          child: Builder(
+            builder: (context) {
+              return Column(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.camera),
-                    onPressed: () async {
-                      print((await _controller.takePicture()).path);
-                    },
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.camera),
+                        onPressed: () async {
+                          final result = await _controller.takePicture();
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (context) => SizedBox(
+                              height: 200,
+                              child: Image.file(File(result.path)),
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.flip_camera_ios),
+                        onPressed: () async {
+                          await _controller.flipCamera();
+                        },
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.flip_camera_ios),
-                    onPressed: () async {
-                      await _controller.flipCamera();
-                    },
+                  Expanded(
+                    child: CameraPreview(
+                      controller: _controller,
+                    ),
                   ),
                 ],
-              ),
-              Expanded(
-                child: CameraPreview(
-                  controller: _controller,
-                ),
-              ),
-
-
-            ],
+              );
+            }
           ),
         ),
       ),

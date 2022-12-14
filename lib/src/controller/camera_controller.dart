@@ -19,12 +19,6 @@ abstract class CameraController {
   /// [FaceIdSensorData] is null when device does not have a face id sensor or [lensDirection] is not [LensDirection.front].
   Future<TakePictureResult> takePicture();
 
-  /// Should be called when all initializations on the platform side are done.
-  ///
-  /// You should never have to call this yourself.
-  @internal
-  Future<void> ready();
-
   /// Disposes all needed resources of the [CameraController].
   ///
   /// [CameraController] cannot be used after.

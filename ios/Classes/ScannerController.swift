@@ -52,6 +52,19 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
                 position: position);
         super.init();
 
+        let notificationCenter = NotificationCenter.default
+        notificationCenter.addObserver(self, selector: #selector(handleNotification(_:)), name: .AVCaptureSessionRuntimeError, object: session)
+
+    }
+
+    @objc func handleNotification(_ notification: Notification) {
+        print(notification.name)
+        print(notification.debugDescription)
+        guard let error = notification.userInfo?[AVCaptureSessionErrorKey] as? AVError else {
+            return
+        }
+
+        print(error)
     }
 
     private let videoDataOutput = AVCaptureVideoDataOutput()
@@ -70,11 +83,14 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
     /// Starts setup for camera.
     func prepare(_ callback: @escaping (Error?) -> Void) {
-
+        print("prepare")
         sessionQueue.async {
             self.configureSession()
             self.session.startRunning()
             DispatchQueue.main.async {
+                print("prepare done")
+                print("setupResult: \(self.setupResult)")
+                print("session.isRunning: \(self.session.isRunning)")
                 callback(nil)
             }
         }
