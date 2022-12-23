@@ -1,7 +1,8 @@
 name: cv_camera
 description: A camera designed specifically for usage with computer vision.
 version: 0.0.1
-homepage:
+homepage: https://selectcode.de
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 environment:
   sdk: '>=2.18.5 <3.0.0'
@@ -13,7 +14,7 @@ dependencies:
   freezed_annotation: ^2.2.0
   plugin_platform_interface: ^2.0.2
   isolate_handler:
-    git: https://github.com/JulianHartl/isolate_handler
+    git: https://github.com/SelectCode/isolate_handler.git
   json_annotation: ^4.7.0
   path_provider: ^2.0.11
   clock: ^1.1.1
