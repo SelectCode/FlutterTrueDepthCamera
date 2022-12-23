@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cv_camera/cv_camera.dart';
@@ -17,14 +18,25 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late final CameraController _controller;
 
+  late final StreamSubscription<CameraImage> _cameraImageStream;
+
   @override
   void initState() {
     super.initState();
     _controller = CvCamera.getCameraController();
+    setUpStream();
+  }
+
+  void setUpStream() async {
+    final stream = await _controller.startImageStream();
+    _cameraImageStream = stream.listen((image) {
+      // print(image.width);
+    });
   }
 
   @override
   void dispose() {
+    _cameraImageStream.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -37,43 +49,40 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: SafeArea(
-          child: Builder(
-            builder: (context) {
-              return Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.camera),
-                        onPressed: () async {
-                          final result = await _controller.takePicture();
-                          showModalBottomSheet(
-                            context: context,
-                            builder: (context) => SizedBox(
-                              height: 200,
-                              child: Image.file(File(result.path)),
-                            ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.flip_camera_ios),
-                        onPressed: () async {
-                          await _controller.flipCamera();
-                        },
-                      ),
-                    ],
-                  ),
-                  Expanded(
-                    child: CameraPreview(
-                      controller: _controller,
+          child: Builder(builder: (context) {
+            return Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.camera),
+                      onPressed: () async {
+                        final result = await _controller.takePicture();
+                        showModalBottomSheet(
+                          context: context,
+                          builder: (context) => SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.7,
+                            child: Image.file(File(result.path)),
+                          ),
+                        );
+                      },
                     ),
+                    IconButton(
+                      icon: const Icon(Icons.flip_camera_ios),
+                      onPressed: () async {
+                      },
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: CameraPreview(
+                    controller: _controller,
                   ),
-                ],
-              );
-            }
-          ),
+                ),
+              ],
+            );
+          }),
         ),
       ),
     );

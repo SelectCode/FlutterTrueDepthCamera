@@ -151,8 +151,6 @@ class FLNativeView: NSObject, FlutterPlatformView {
                 let encoded = self.encodeFaceIdSensorData(data)
                 let pictureData: Dictionary<String, Any?> = [
                     "image": self.encodeNativeCameraImage(image: image), "depthData": encoded]
-                self.methodChannel.invokeMethod("gotDepthData", arguments: encoded)
-                self.methodChannel.invokeMethod("takePicture", arguments: pictureData)
                 onData(pictureData)
 
             }
@@ -160,7 +158,6 @@ class FLNativeView: NSObject, FlutterPlatformView {
             scannerController?.getImageBytes({ imageData in
                 let pictureData: Dictionary<String, Any?> = [
                     "image": imageData];
-                self.methodChannel.invokeMethod("takePicture", arguments: pictureData)
                 onData(pictureData)
             })
         }

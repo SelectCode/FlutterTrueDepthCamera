@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:cv_camera/src/controller/camera_controller.dart';
 import 'package:cv_camera/src/models/lens_direction.dart';
 import 'package:flutter/foundation.dart';
@@ -18,11 +19,13 @@ class MethodChannelCvCamera extends CvCameraPlatform {
   @override
   CameraController getCameraController({
     LensDirection? lensDirection,
+    Clock? clock,
   }) {
     return CameraControllerImpl(
       lensDirection: lensDirection,
       methodChannel: methodChannel,
       eventChannel: eventChannel,
+      clock: clock,
     );
   }
 }

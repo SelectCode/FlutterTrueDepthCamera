@@ -8,11 +8,11 @@ class CameraPreview extends StatefulWidget {
   const CameraPreview({
     Key? key,
     required this.controller,
-    this.overlay,
+    this.child,
   }) : super(key: key);
 
   final CameraController controller;
-  final Widget? overlay;
+  final Widget? child;
 
   @override
   State<CameraPreview> createState() => _CameraPreviewState();
@@ -32,14 +32,10 @@ class _CameraPreviewState extends State<CameraPreview> {
       children: [
         UiKitView(
           viewType: viewType,
-          layoutDirection: TextDirection.ltr,
           creationParams: creationParams,
           creationParamsCodec: const StandardMessageCodec(),
-          onPlatformViewCreated: (id) {
-            print('created platform view with id $id');
-          },
         ),
-        if (widget.overlay != null) widget.overlay!
+        if (widget.child != null) widget.child!
       ],
     );
   }

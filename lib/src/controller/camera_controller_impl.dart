@@ -3,11 +3,9 @@ import 'dart:io';
 
 import 'package:clock/clock.dart';
 import 'package:cv_camera/src/controller/camera_controller.dart';
+import 'package:cv_camera/src/utils/image_builder.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image/image.dart';
-import 'package:isolate_handler/isolate_handler.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -23,19 +21,16 @@ class _OnTakePictureArgs {
   });
 }
 
-/// A [CameraControllerImpl] controls a [CameraPreview].
 class CameraControllerImpl implements CameraController {
   @visibleForTesting
   late final MethodChannel methodChannel;
-  late final StreamController<TakePictureResult> _takePictureController;
-  @visibleForTesting
   final EventChannel eventChannel;
-  late final IsolateHandler<_OnTakePictureArgs, void> _isolateHandler;
 
   /// Determines which lens the camera uses.
   @override
   late final LensDirection lensDirection;
-  final Clock clock;
+  @visibleForTesting
+  late final Clock clock;
 
   /// The size of the current camera preview.
   ///
@@ -47,38 +42,28 @@ class CameraControllerImpl implements CameraController {
     LensDirection? lensDirection,
     required this.eventChannel,
     required this.methodChannel,
-    @visibleForTesting this.clock = const Clock(),
+    Clock? clock,
   }) {
+    this.clock = clock ?? const Clock();
     this.lensDirection = lensDirection ?? LensDirection.front;
-    _takePictureController = StreamController();
-    _isolateHandler = IsolateHandler(handler: _onTakePicture);
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
-        case "takePicture":
-          _isolateHandler.send(
-            params: _OnTakePictureArgs(
-              controller: _takePictureController,
-              data: call.arguments,
-            ),
-          );
-          break;
         case "initDone":
-          await _onInitDone();
+          await onInitDone();
       }
     });
   }
 
-  static Future<void> _onTakePicture(_OnTakePictureArgs args) async {
-    final takePictureResult = TakePictureResult.fromJson(args.data);
-    args.controller.add(takePictureResult);
-  }
+  @visibleForTesting
 
   /// Initialize all properties that are sent from the ios platform
-  Future<void> _init() async {
+  Future<void> init() async {
     final sizeResponse = Map<String, dynamic>.from(
         (await methodChannel.invokeMethod("previewSize")));
 
-    previewSize = Size(sizeResponse["width"], sizeResponse["height"]);
+    final width = sizeResponse["width"] as num;
+    final height = sizeResponse["height"] as num;
+    previewSize = Size(width.toDouble(), height.toDouble());
   }
 
   bool _isStreaming = false;
@@ -93,7 +78,10 @@ class CameraControllerImpl implements CameraController {
   @override
   Future<Stream<CameraImage>> startImageStream() async {
     await readyCompleter.future;
-    if (!_isolateHandler.isSpawned) await _isolateHandler.spawn();
+
+    if (isStreaming) {
+      throw Exception("Image stream is already running.");
+    }
 
     await methodChannel.invokeMethod("startImageStream");
     _isStreaming = true;
@@ -122,18 +110,18 @@ class CameraControllerImpl implements CameraController {
     final temporaryDirPath = params.temporaryDirectoryPath;
     final clock = params.clock;
 
-    final image =
+    final cameraImage =
         CameraImage.fromJson(Map<String, dynamic>.from(response['image']));
     final imageFile = File(
         join(temporaryDirPath, '${clock.now().millisecondsSinceEpoch}.jpg'));
     await imageFile.create(recursive: true);
+    final imageBuilder = ImageBuilder.fromCameraImage(cameraImage)
+        .rotate(90)
+        .flipHorizontally();
+    final bytes = imageBuilder.asJpg();
+    final writtenFile = (await imageFile.writeAsBytes(bytes));
+    final path = writtenFile.path;
 
-    final decodedImage = decodeImage(image.getBytes().toList());
-    if (decodedImage == null) {
-      throw Exception("Could not decode image");
-    }
-    final encoded = JpegEncoder().encodeImage(decodedImage);
-    final path = (await imageFile.writeAsBytes(encoded)).path;
     final decoded =
         TakePictureResult.fromJson(response..addAll({'path': path}));
 
@@ -162,23 +150,17 @@ class CameraControllerImpl implements CameraController {
   @visibleForTesting
   final Completer readyCompleter = Completer();
 
-  @override
-  Future<void> _onInitDone() async {
+  @visibleForTesting
+  Future<void> onInitDone() async {
     if (initialized) return;
-    await _init();
+    await init();
     readyCompleter.complete();
   }
 
   @override
   Future<void> dispose() async {
-    _isolateHandler.close();
     await stopImageStream();
     methodChannel.invokeMethod('dispose');
-  }
-
-  @override
-  Future<void> flipCamera() {
-    throw UnimplementedError();
   }
 }
 

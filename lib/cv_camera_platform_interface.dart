@@ -1,3 +1,4 @@
+import 'package:cv_camera/cv_camera.dart';
 import 'package:cv_camera/src/controller/camera_controller.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -24,5 +25,5 @@ abstract class CvCameraPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  CameraController getCameraController();
+  CameraController getCameraController({LensDirection? lensDirection});
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../models/models.dart';
 
@@ -37,7 +36,4 @@ abstract class CameraController {
 
   /// Determines which lens the camera uses.
   LensDirection get lensDirection;
-
-  // Flips the lens direction.
-  Future<void> flipCamera();
 }
