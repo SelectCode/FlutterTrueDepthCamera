@@ -19,11 +19,13 @@ class _MyAppState extends State<MyApp> {
   late final CameraController _controller;
 
   late final StreamSubscription<CameraImage> _cameraImageStream;
+  late final CameraShootEffectController _shootEffectController;
 
   @override
   void initState() {
     super.initState();
     _controller = CvCamera.getCameraController();
+    _shootEffectController = CameraShootEffectController();
     setUpStream();
   }
 
@@ -36,6 +38,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
+    _shootEffectController.dispose();
     _cameraImageStream.cancel();
     _controller.dispose();
     super.dispose();
@@ -58,6 +61,7 @@ class _MyAppState extends State<MyApp> {
                     IconButton(
                       icon: const Icon(Icons.camera),
                       onPressed: () async {
+                        _shootEffectController.play();
                         final result = await _controller.takePicture();
                         showModalBottomSheet(
                           context: context,
@@ -70,13 +74,13 @@ class _MyAppState extends State<MyApp> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.flip_camera_ios),
-                      onPressed: () async {
-                      },
+                      onPressed: () async {},
                     ),
                   ],
                 ),
                 Expanded(
                   child: CameraPreview(
+                    shootEffectController: _shootEffectController,
                     controller: _controller,
                   ),
                 ),

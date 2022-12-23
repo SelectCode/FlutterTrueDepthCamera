@@ -1,3 +1,4 @@
+import 'package:cv_camera/src/misc/camera_shoot_effect.dart';
 import 'package:cv_camera/src/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,10 +10,12 @@ class CameraPreview extends StatefulWidget {
     Key? key,
     required this.controller,
     this.child,
+    this.shootEffectController,
   }) : super(key: key);
 
   final CameraController controller;
   final Widget? child;
+  final CameraShootEffectController? shootEffectController;
 
   @override
   State<CameraPreview> createState() => _CameraPreviewState();
@@ -35,7 +38,11 @@ class _CameraPreviewState extends State<CameraPreview> {
           creationParams: creationParams,
           creationParamsCodec: const StandardMessageCodec(),
         ),
-        if (widget.child != null) widget.child!
+        if (widget.child != null) widget.child!,
+        if (widget.shootEffectController != null)
+          Center(
+            child: CameraShootEffect(controller: widget.shootEffectController!),
+          )
       ],
     );
   }
