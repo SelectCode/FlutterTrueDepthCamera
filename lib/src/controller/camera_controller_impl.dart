@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:clock/clock.dart';
 import 'package:cv_camera/src/controller/camera_controller.dart';
-import 'package:cv_camera/src/models/calibration_data/calibration_data.dart';
+import 'package:cv_camera/src/models/calibration_data.dart';
 import 'package:cv_camera/src/utils/image_builder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -160,24 +160,9 @@ class CameraControllerImpl implements CameraController {
   @override
   Future<CvCameraCalibrationData> getCalibrationData() async {
     final response = Map<String, dynamic>.from(
-      await methodChannel.invokeMethod("get_calibration_data"),
-    );
+        await methodChannel.invokeMethod("get_calibration_data"));
+    print(response);
     return CvCameraCalibrationData.fromJson(response);
-  }
-
-  @override
-  Future<FaceIdSensorData> getFaceIdSensorData() async {
-    final response = Map<String, dynamic>.from(
-      await methodChannel.invokeMethod("get_face_id_sensor_data"),
-    );
-    return FaceIdSensorData.fromJson(response);
-  }
-
-  @override
-  Stream<FaceIdSensorData> getFaceIdSensorDataStream(int interval) {
-    return Stream.periodic(Duration(milliseconds: interval), (i) async {
-      return await getFaceIdSensorData();
-    }).asyncMap((event) => event);
   }
 }
 
