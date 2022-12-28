@@ -92,6 +92,11 @@ class FLNativeView: NSObject, FlutterPlatformView {
                     data in
                     result(data)
                 })
+            case "get_calibration_data":
+                self.calibrationDataSnapshot({
+                    data in
+                    result(data)
+                })
             case "dispose":
                 self.dispose {
                     result(nil);
@@ -139,6 +144,57 @@ class FLNativeView: NSObject, FlutterPlatformView {
         [
             "width": NSNumber(value: previewView.layer.frame.width),
             "height": NSNumber(value: previewView.layer.frame.height)
+        ]
+    }
+
+    func calibrationDataSnapshot(_ onData: @escaping ((Dictionary<String, Any?>) -> Void)) {
+        scannerController?.getCalibrationData { (data) in
+            let calibrationData = data
+            let pixelSize = NSNumber(value: calibrationData.pixelSize)
+            let iMatrix = calibrationData.intrinsicMatrix.columns;
+            let intrinsicMatrix = [
+                self.parseMatrixCol(iMatrix.0),
+                self.parseMatrixCol(iMatrix.1),
+                self.parseMatrixCol(iMatrix.2),
+            ]
+            let eMatrix = calibrationData.extrinsicMatrix.columns
+            let extrinsicMatrix: [Dictionary<String, NSNumber>] = [
+                self.parseMatrixCol(eMatrix.0),
+                self.parseMatrixCol(eMatrix.1),
+                self.parseMatrixCol(eMatrix.2),
+                self.parseMatrixCol(eMatrix.3),
+            ]
+            let intrinsicMatrixReferenceDimensionsData = calibrationData.intrinsicMatrixReferenceDimensions
+            let intrinsicMatrixReferenceDimensions: Dictionary<String, NSNumber> = [
+                "width": NSNumber(value: intrinsicMatrixReferenceDimensionsData.width),
+                "height": NSNumber(value: intrinsicMatrixReferenceDimensionsData.height),
+            ]
+            let lensDistortionCenterData = calibrationData.lensDistortionCenter
+            let lensDistortionCenter: Dictionary<String, NSNumber> = [
+                "x": NSNumber(value: lensDistortionCenterData.x),
+                "y": NSNumber(value: lensDistortionCenterData.y),
+            ]
+            let lensDistortionLookupTableData = calibrationData.lensDistortionLookupTable
+            let lensDistortionLookupTable = FlutterStandardTypedData(bytes: Data(lensDistortionLookupTableData!.map { point in
+                point
+            }))
+
+            onData([
+                "intrinsicMatrix": intrinsicMatrix,
+                "intrinsicMatrixReferenceDimensions": intrinsicMatrixReferenceDimensions,
+                "extrinsicMatrix": extrinsicMatrix,
+                "pixelSize": pixelSize,
+                "lensDistortionLookupTable": lensDistortionLookupTable,
+                "lensDistortionCenter": lensDistortionCenter
+            ]);
+        }
+    }
+
+    func parseMatrixCol(_ col: simd_float3) -> Dictionary<String, NSNumber> {
+        return [
+            "x": NSNumber(value: col.x),
+            "y": NSNumber(value: col.y),
+            "z": NSNumber(value: col.z)
         ]
     }
 

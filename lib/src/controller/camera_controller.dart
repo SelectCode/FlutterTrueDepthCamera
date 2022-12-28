@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/calibration_data.dart';
 import '../models/models.dart';
 
 abstract class CameraController {
@@ -36,4 +37,7 @@ abstract class CameraController {
 
   /// Determines which lens the camera uses.
   LensDirection get lensDirection;
+
+  /// Gets the calibration data of the current camera.
+  Future<CvCameraCalibrationData> getCalibrationData();
 }

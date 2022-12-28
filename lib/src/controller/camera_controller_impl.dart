@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:clock/clock.dart';
 import 'package:cv_camera/src/controller/camera_controller.dart';
+import 'package:cv_camera/src/models/calibration_data.dart';
 import 'package:cv_camera/src/utils/image_builder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -10,16 +11,6 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../models/models.dart';
-
-class _OnTakePictureArgs {
-  final StreamController<TakePictureResult> controller;
-  final Map<String, dynamic> data;
-
-  const _OnTakePictureArgs({
-    required this.controller,
-    required this.data,
-  });
-}
 
 class CameraControllerImpl implements CameraController {
   @visibleForTesting
@@ -115,9 +106,8 @@ class CameraControllerImpl implements CameraController {
     final imageFile = File(
         join(temporaryDirPath, '${clock.now().millisecondsSinceEpoch}.jpg'));
     await imageFile.create(recursive: true);
-    final imageBuilder = ImageBuilder.fromCameraImage(cameraImage)
-        .rotate(90)
-        .flipHorizontally();
+    final imageBuilder =
+        ImageBuilder.fromCameraImage(cameraImage).rotate(90).flipHorizontally();
     final bytes = imageBuilder.asJpg();
     final writtenFile = (await imageFile.writeAsBytes(bytes));
     final path = writtenFile.path;
@@ -161,6 +151,14 @@ class CameraControllerImpl implements CameraController {
   Future<void> dispose() async {
     await stopImageStream();
     methodChannel.invokeMethod('dispose');
+  }
+
+  @override
+  Future<CvCameraCalibrationData> getCalibrationData() async {
+    final response = Map<String, dynamic>.from(
+        await methodChannel.invokeMethod("get_calibration_data"));
+    print(response);
+    return CvCameraCalibrationData.fromJson(response);
   }
 }
 
