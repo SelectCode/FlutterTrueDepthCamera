@@ -22,6 +22,7 @@ MethodCallTracker setCameraMockMethodCallHandler(
       if (countInit) {
         tracker.track(call);
       }
+
       final initResult = mockInit(call.method);
       if (initResult != null) {
         return initResult;
