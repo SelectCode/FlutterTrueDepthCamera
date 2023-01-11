@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:clock/clock.dart';
 import 'package:cv_camera/src/controller/camera_controller.dart';
+import 'package:cv_camera/src/models/calibration_data/calibration_data.dart';
 import 'package:cv_camera/src/utils/image_builder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -10,16 +11,6 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../models/models.dart';
-
-class _OnTakePictureArgs {
-  final StreamController<TakePictureResult> controller;
-  final Map<String, dynamic> data;
-
-  const _OnTakePictureArgs({
-    required this.controller,
-    required this.data,
-  });
-}
 
 class CameraControllerImpl implements CameraController {
   @visibleForTesting
@@ -164,6 +155,29 @@ class CameraControllerImpl implements CameraController {
   Future<void> dispose() async {
     await stopImageStream();
     methodChannel.invokeMethod('dispose');
+  }
+
+  @override
+  Future<CvCameraCalibrationData> getCalibrationData() async {
+    final response = Map<String, dynamic>.from(
+      await methodChannel.invokeMethod("get_calibration_data"),
+    );
+    return CvCameraCalibrationData.fromJson(response);
+  }
+
+  @override
+  Future<FaceIdSensorData> getFaceIdSensorData() async {
+    final response = Map<String, dynamic>.from(
+      await methodChannel.invokeMethod("get_face_id_sensor_data"),
+    );
+    return FaceIdSensorData.fromJson(response);
+  }
+
+  @override
+  Stream<FaceIdSensorData> getFaceIdSensorDataStream(int interval) {
+    return Stream.periodic(Duration(milliseconds: interval), (i) async {
+      return await getFaceIdSensorData();
+    }).asyncMap((event) => event);
   }
 }
 

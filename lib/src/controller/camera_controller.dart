@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/calibration_data/calibration_data.dart';
 import '../models/models.dart';
 
 abstract class CameraController {
@@ -36,4 +37,15 @@ abstract class CameraController {
 
   /// Determines which lens the camera uses.
   LensDirection get lensDirection;
+
+  /// Gets the calibration data of the current camera.
+  Future<CvCameraCalibrationData> getCalibrationData();
+
+  /// Returns a snapshot of the current [FaceIdSensorData].
+  Future<FaceIdSensorData> getFaceIdSensorData();
+
+  /// Returns a stream of snapshots of the current [FaceIdSensorData].
+  ///
+  /// `interval` specifies the interval in milliseconds between two snapshots.
+  Stream<FaceIdSensorData> getFaceIdSensorDataStream(int interval);
 }

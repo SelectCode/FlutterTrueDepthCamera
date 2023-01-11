@@ -31,9 +31,7 @@ class _MyAppState extends State<MyApp> {
 
   void setUpStream() async {
     final stream = await _controller.startImageStream();
-    _cameraImageStream = stream.listen((image) {
-      // print(image.width);
-    });
+    _cameraImageStream = stream.listen((image) {});
   }
 
   @override
@@ -73,8 +71,18 @@ class _MyAppState extends State<MyApp> {
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.flip_camera_ios),
-                      onPressed: () async {},
+                      icon: const Icon(Icons.compass_calibration),
+                      onPressed: () async {
+                        final result = await _controller.getCalibrationData();
+                        print(result);
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.face),
+                      onPressed: () async {
+                        final result = await _controller.getFaceIdSensorData();
+                        print(result);
+                      },
                     ),
                   ],
                 ),

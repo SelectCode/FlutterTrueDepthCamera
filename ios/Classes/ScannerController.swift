@@ -73,7 +73,16 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var snapshotCallback: ((FaceIdData, NativeCameraImage) -> Void)?
+    private var calibrationCallback: ((AVCameraCalibrationData) -> Void)?
+    private var faceIdSensorDataCallback: ((FaceIdData) -> Void)?
 
+    func getCalibrationData(_ callback: @escaping (AVCameraCalibrationData) -> Void) {
+        calibrationCallback = callback
+    }
+
+    func getFaceIdSensorDataSnapshot(_ callback: @escaping (FaceIdData) -> Void) {
+        faceIdSensorDataCallback = callback
+    }
 
     /// Returns [FaceIdData] and a [NativeCameraImage] for the next processed frame.
     func getSnapshot(_ callback: @escaping (FaceIdData, NativeCameraImage) -> Void) {
@@ -200,14 +209,20 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
             if (self.bytesCallback != nil) {
                 self.bytesCallback!(self.getNativeCameraImage(sampleBuffer: sampleBuffer))
-                self.bytesCallback = nil;
+                self.bytesCallback = nil
 
             }
+
+            if (self.calibrationCallback != nil) {
+                self.calibrationCallback!(depthData.cameraCalibrationData!)
+                self.calibrationCallback = nil
+            }
+
             if (self.streaming) {
                 self.streamingCallback!(self.getNativeCameraImage(sampleBuffer: sampleBuffer))
             }
 
-            if (self.snapshotCallback != nil) {
+            if (self.snapshotCallback != nil || self.faceIdSensorDataCallback != nil) {
                 self.pointCloudQueue.async {
                     var cgImage: CGImage?
                     VTCreateCGImageFromCVPixelBuffer(videoPixelBuffer, options: nil, imageOut: &cgImage)
@@ -259,12 +274,17 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             return
         }
 
-        if let callback = self.snapshotCallback {
-            let faceIdData = convertRGBDtoXYZ(colorImage: cgColorImage, depthValues: depthValues, depthWidth: depthWidth, cameraCalibrationData: cameraCalibrationData)
-            callback(faceIdData, decodeNativeCameraImage(getNativeCameraImage(sampleBuffer: sampleBuffer)))
 
+        let faceIdData = convertRGBDtoXYZ(colorImage: cgColorImage, depthValues: depthValues, depthWidth: depthWidth, cameraCalibrationData: cameraCalibrationData)
+        if (self.faceIdSensorDataCallback != nil) {
+            self.faceIdSensorDataCallback!(faceIdData)
+            self.faceIdSensorDataCallback = nil
+        }
+        if (self.snapshotCallback != nil) {
+            self.snapshotCallback!(faceIdData, decodeNativeCameraImage(getNativeCameraImage(sampleBuffer: sampleBuffer)))
             self.snapshotCallback = nil
         }
+
     }
 
     /// Returns a decoded [NativeCameraImage] from a Map.

@@ -117,7 +117,7 @@ packages:
     source: hosted
     version: "2.2.0"
   image:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: image
       url: "https://pub.dartlang.org"
@@ -129,7 +129,7 @@ packages:
       path: "."
       ref: HEAD
       resolved-ref: dd66d459fe40e54047e1d20c9c1fc8d10f7a8641
-      url: "https://github.com/JulianHartl/isolate_handler"
+      url: "https://github.com/SelectCode/isolate_handler.git"
     source: git
     version: "1.0.0"
   js:
