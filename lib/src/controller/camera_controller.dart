@@ -54,7 +54,7 @@ abstract class CameraController {
   Stream<List<double>> getDepthValueStream(int interval);
 
   bool checkForObject({
-    required FaceIdSensorData data,
+    required List<double> depthValues,
     required double minCoverage,
   });
 }

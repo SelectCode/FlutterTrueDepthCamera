@@ -23,7 +23,7 @@ void main() {
     expect(
       () => sut.checkForObject(
         minCoverage: minCoverage,
-        data: TakePictureTestResources.depthDataSerialized,
+        depthValues: TakePictureTestResources.depthDataSerialized.depthValues,
       ),
       throwsA(
         predicate<RangeError>(
@@ -45,7 +45,7 @@ void main() {
     expect(
       () => sut.checkForObject(
         minCoverage: 0,
-        data: TakePictureTestResources.depthDataSerialized,
+        depthValues: TakePictureTestResources.depthDataSerialized.depthValues,
       ),
       returnsNormally,
     );
@@ -53,7 +53,7 @@ void main() {
     expect(
       () => sut.checkForObject(
         minCoverage: 1,
-        data: TakePictureTestResources.depthDataSerialized,
+        depthValues: TakePictureTestResources.depthDataSerialized.depthValues,
       ),
       returnsNormally,
     );

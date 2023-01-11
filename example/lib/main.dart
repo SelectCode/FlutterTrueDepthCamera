@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:cv_camera/cv_camera.dart';
 import 'package:flutter/material.dart';
@@ -122,15 +121,15 @@ class ObjectDetectionDisplay extends StatefulWidget {
 }
 
 class _ObjectDetectionDisplayState extends State<ObjectDetectionDisplay> {
-  late StreamSubscription<FaceIdSensorData> _sensorStream;
+  late StreamSubscription<List<double>> _sensorStream;
 
   @override
   void initState() {
     super.initState();
     _sensorStream =
-        widget.controller.getFaceIdSensorDataStream(50).listen((event) {
+        widget.controller.getDepthValueStream(50).listen((depthValues) {
       final isDetectingObject = widget.controller.checkForObject(
-        data: event,
+        depthValues: depthValues,
         minCoverage: 0.5,
       );
       setState(() {

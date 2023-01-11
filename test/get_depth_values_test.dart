@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cv_camera/cv_camera.dart';
 import 'package:cv_camera/cv_camera_method_channel.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +12,7 @@ import 'utils/set_up_camera_controller.dart';
 void main() {
   late CameraController sut;
   late MethodCallTracker tracker;
+  final depthValues = Float32List.fromList([1.0]);
   setUp(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     final platform = MethodChannelCvCamera();
@@ -17,7 +20,7 @@ void main() {
       platform.methodChannel,
       (call) async {
         if (call.method == 'get_depth_values') {
-          return TakePictureTestResources.depthDataJson['depthValues'];
+          return depthValues;
         }
       },
     );
@@ -25,7 +28,7 @@ void main() {
   });
 
   test('should call get_depth_values', () async {
-    await sut.getFaceIdSensorData();
+    await sut.getDepthValues();
     expect(
       tracker.calls,
       contains(
@@ -50,13 +53,6 @@ void main() {
     expect(duration, greaterThan(299));
 
     expect(snapshots.length, 3);
-    expect(
-      snapshots,
-      [
-        TakePictureTestResources.depthDataSerialized.depthValues,
-        TakePictureTestResources.depthDataSerialized.depthValues,
-        TakePictureTestResources.depthDataSerialized.depthValues,
-      ],
-    );
+    expect(snapshots, List.filled(3, depthValues.toList()));
   });
 }

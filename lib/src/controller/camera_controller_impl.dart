@@ -183,14 +183,15 @@ class CameraControllerImpl implements CameraController {
 
   @override
   bool checkForObject({
-    required FaceIdSensorData data,
+    required List<double> depthValues,
     required double minCoverage,
   }) {
     if (minCoverage < 0 || minCoverage > 1) {
       throw RangeError("minCoverage must be between 0 and 1");
     }
-    final width = data.width;
-    final height = data.height;
+    // todo: read values from swift
+    final width = 640;
+    final height = 480;
 
     final centerWidthRange = Range(
       (width * 0.3).toInt(),
@@ -206,12 +207,12 @@ class CameraControllerImpl implements CameraController {
     const depthRange = Range(0.15, 0.3);
     int matchingValues = 0;
 
-    for (int i = 0; i < data.depthValues.length; i++) {
+    for (int i = 0; i < depthValues.length; i++) {
       final x = i % width;
       final y = i / width;
-      final value = data.depthValues[i];
+      final value = depthValues[i];
       if (depthRange.contains(value) &&
-          centerWidthRange.contains(x) &&
+          centerWidthRange.contains(x.toInt()) &&
           centerHeightRange.contains(y.toInt())) {
         matchingValues++;
       }
@@ -224,6 +225,7 @@ class CameraControllerImpl implements CameraController {
   @override
   Stream<List<double>> getDepthValueStream(int interval) {
     return Stream.periodic(Duration(milliseconds: interval), (i) async {
+      // improve performance here. takes about 260 ms
       final data = await getDepthValues();
       return data;
     }).asyncMap((event) => event);
