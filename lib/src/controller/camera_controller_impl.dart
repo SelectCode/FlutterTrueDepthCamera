@@ -113,11 +113,14 @@ class CameraControllerImpl implements CameraController {
     final cameraImage =
         CameraImage.fromJson(Map<String, dynamic>.from(response['image']));
     final imageFile = File(
-        join(temporaryDirPath, '${clock.now().millisecondsSinceEpoch}.jpg'));
+      join(
+        temporaryDirPath,
+        '${clock.now().millisecondsSinceEpoch}.jpg',
+      ),
+    );
     await imageFile.create(recursive: true);
-    final imageBuilder = ImageBuilder.fromCameraImage(cameraImage)
-        .rotate(90)
-        .flipHorizontally();
+    final imageBuilder =
+        ImageBuilder.fromCameraImage(cameraImage).rotate(90).flipHorizontally();
     final bytes = imageBuilder.asJpg();
     final writtenFile = (await imageFile.writeAsBytes(bytes));
     final path = writtenFile.path;
