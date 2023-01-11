@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/calibration_data.dart';
+import '../models/calibration_data/calibration_data.dart';
 import '../models/models.dart';
 
 abstract class CameraController {
