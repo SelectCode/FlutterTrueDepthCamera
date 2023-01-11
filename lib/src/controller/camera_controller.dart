@@ -40,4 +40,7 @@ abstract class CameraController {
 
   /// Gets the calibration data of the current camera.
   Future<CvCameraCalibrationData> getCalibrationData();
+
+  /// Returns a snapshot of the current [FaceIdSensorData].
+  Future<FaceIdSensorData> getFaceIdSensorData();
 }
