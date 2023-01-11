@@ -90,6 +90,11 @@ class _MyAppState extends State<MyApp> {
                   child: CameraPreview(
                     shootEffectController: _shootEffectController,
                     controller: _controller,
+                    child: Center(
+                      child: ObjectDetectionDisplay(
+                        controller: _controller,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -98,5 +103,49 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
     );
+  }
+}
+
+class ObjectDetectionDisplay extends StatefulWidget {
+  const ObjectDetectionDisplay({Key? key, required this.controller})
+      : super(key: key);
+
+  final CameraController controller;
+
+  @override
+  State<ObjectDetectionDisplay> createState() => _ObjectDetectionDisplayState();
+}
+
+class _ObjectDetectionDisplayState extends State<ObjectDetectionDisplay> {
+  late StreamSubscription<FaceIdSensorData> _sensorStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _sensorStream =
+        widget.controller.getFaceIdSensorDataStream(200).listen((event) {
+      final isDetectingObject = widget.controller.checkForObject(
+        data: event,
+        minCoverage: 0.5,
+      );
+      setState(() {
+        this.isDetectingObject = isDetectingObject;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _sensorStream.cancel();
+    super.dispose();
+  }
+
+  bool isDetectingObject = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return isDetectingObject
+        ? const Text('Detecting Object')
+        : const Text('Not Detecting Object');
   }
 }
