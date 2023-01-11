@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:clock/clock.dart';
 import 'package:cv_camera/src/controller/camera_controller.dart';
+import 'package:cv_camera/src/misc/range.dart';
 import 'package:cv_camera/src/models/calibration_data/calibration_data.dart';
 import 'package:cv_camera/src/utils/image_builder.dart';
 import 'package:flutter/foundation.dart';
@@ -178,6 +179,52 @@ class CameraControllerImpl implements CameraController {
     return Stream.periodic(Duration(milliseconds: interval), (i) async {
       return await getFaceIdSensorData();
     }).asyncMap((event) => event);
+  }
+
+  @override
+  bool checkForObject({
+    required FaceIdSensorData data,
+    required double minCoverage,
+  }) {
+    if (minCoverage < 0 || minCoverage > 1) {
+      throw RangeError("minCoverage must be between 0 and 1");
+    }
+    final width = data.width;
+    final centerWidthRange = Range(
+      (width * 0.3).toInt(),
+      (width * 0.7).toInt(),
+    );
+    final height = data.height;
+    final centerHeightRange = Range(
+      (height * 0.3).toInt(),
+      (height * 0.7).toInt(),
+    );
+    final centerCount =
+        (centerWidthRange.upperBound - centerWidthRange.lowerBound) *
+            (centerHeightRange.upperBound - centerHeightRange.lowerBound);
+    const depthRange = Range(0.15, 0.3);
+    List<int> xs = List.empty(growable: true);
+    List<int> ys = List.empty(growable: true);
+    List<double> depths = List.empty(growable: true);
+
+    for (int i = 0; i < data.xyz.length; i++) {
+      final x = i % width;
+      final y = i / width;
+      final value = data.xyz[i];
+      if (depthRange.contains(value) &&
+          centerWidthRange.contains(x) &&
+          centerHeightRange.contains(y.toInt())) {
+        xs.add(x);
+        ys.add(y.toInt());
+        depths.add(value);
+      }
+    }
+
+    final coverage = xs.length / centerCount;
+
+    final hasMinCoverage = coverage > minCoverage;
+
+    return hasMinCoverage;
   }
 }
 
