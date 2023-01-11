@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cv_camera/cv_camera.dart';
 import 'package:flutter/material.dart';
@@ -87,14 +88,18 @@ class _MyAppState extends State<MyApp> {
                   ],
                 ),
                 Expanded(
-                  child: CameraPreview(
-                    shootEffectController: _shootEffectController,
-                    controller: _controller,
-                    child: Center(
-                      child: ObjectDetectionDisplay(
+                  child: Stack(
+                    children: [
+                      CameraPreview(
+                        shootEffectController: _shootEffectController,
                         controller: _controller,
                       ),
-                    ),
+                      Center(
+                        child: ObjectDetectionDisplay(
+                          controller: _controller,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -123,12 +128,11 @@ class _ObjectDetectionDisplayState extends State<ObjectDetectionDisplay> {
   void initState() {
     super.initState();
     _sensorStream =
-        widget.controller.getFaceIdSensorDataStream(200).listen((event) {
+        widget.controller.getFaceIdSensorDataStream(50).listen((event) {
       final isDetectingObject = widget.controller.checkForObject(
         data: event,
         minCoverage: 0.5,
       );
-      print(isDetectingObject);
       setState(() {
         this.isDetectingObject = isDetectingObject;
       });

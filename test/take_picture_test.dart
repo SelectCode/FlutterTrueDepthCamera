@@ -18,7 +18,8 @@ abstract class TakePictureTestResources {
     "width": 200,
     "height": 200,
     "rgb": [1],
-    "xyz": [1.0]
+    "xyz": [1.0],
+    "depthValues": [1.0],
   };
 
   static final depthDataSerialized = FaceIdSensorData(
@@ -26,6 +27,7 @@ abstract class TakePictureTestResources {
     xyz: Float64List.fromList([1.0]),
     width: 200,
     height: 200,
+    depthValues: Float32List.fromList([1.0]),
   );
 
   static const takePictureResultJson = {
@@ -131,6 +133,5 @@ void main() {
       final file = File(path);
       expect(file.existsSync(), isTrue);
     });
-
   });
 }

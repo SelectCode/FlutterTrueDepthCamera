@@ -24,6 +24,8 @@ mixin _$FaceIdSensorData {
   Uint8List get rgb => throw _privateConstructorUsedError;
   @Float64ListConverter()
   Float64List get xyz => throw _privateConstructorUsedError;
+  @Float32ListConverter()
+  Float32List get depthValues => throw _privateConstructorUsedError;
   int get width => throw _privateConstructorUsedError;
   int get height => throw _privateConstructorUsedError;
 
@@ -42,6 +44,7 @@ abstract class $FaceIdSensorDataCopyWith<$Res> {
   $Res call(
       {@Uint8ListConverter() Uint8List rgb,
       @Float64ListConverter() Float64List xyz,
+      @Float32ListConverter() Float32List depthValues,
       int width,
       int height});
 }
@@ -61,6 +64,7 @@ class _$FaceIdSensorDataCopyWithImpl<$Res, $Val extends FaceIdSensorData>
   $Res call({
     Object? rgb = null,
     Object? xyz = null,
+    Object? depthValues = null,
     Object? width = null,
     Object? height = null,
   }) {
@@ -73,6 +77,10 @@ class _$FaceIdSensorDataCopyWithImpl<$Res, $Val extends FaceIdSensorData>
           ? _value.xyz
           : xyz // ignore: cast_nullable_to_non_nullable
               as Float64List,
+      depthValues: null == depthValues
+          ? _value.depthValues
+          : depthValues // ignore: cast_nullable_to_non_nullable
+              as Float32List,
       width: null == width
           ? _value.width
           : width // ignore: cast_nullable_to_non_nullable
@@ -96,6 +104,7 @@ abstract class _$$_FaceIdSensorDataCopyWith<$Res>
   $Res call(
       {@Uint8ListConverter() Uint8List rgb,
       @Float64ListConverter() Float64List xyz,
+      @Float32ListConverter() Float32List depthValues,
       int width,
       int height});
 }
@@ -113,6 +122,7 @@ class __$$_FaceIdSensorDataCopyWithImpl<$Res>
   $Res call({
     Object? rgb = null,
     Object? xyz = null,
+    Object? depthValues = null,
     Object? width = null,
     Object? height = null,
   }) {
@@ -125,6 +135,10 @@ class __$$_FaceIdSensorDataCopyWithImpl<$Res>
           ? _value.xyz
           : xyz // ignore: cast_nullable_to_non_nullable
               as Float64List,
+      depthValues: null == depthValues
+          ? _value.depthValues
+          : depthValues // ignore: cast_nullable_to_non_nullable
+              as Float32List,
       width: null == width
           ? _value.width
           : width // ignore: cast_nullable_to_non_nullable
@@ -143,6 +157,7 @@ class _$_FaceIdSensorData implements _FaceIdSensorData {
   const _$_FaceIdSensorData(
       {@Uint8ListConverter() required this.rgb,
       @Float64ListConverter() required this.xyz,
+      @Float32ListConverter() required this.depthValues,
       required this.width,
       required this.height});
 
@@ -156,13 +171,16 @@ class _$_FaceIdSensorData implements _FaceIdSensorData {
   @Float64ListConverter()
   final Float64List xyz;
   @override
+  @Float32ListConverter()
+  final Float32List depthValues;
+  @override
   final int width;
   @override
   final int height;
 
   @override
   String toString() {
-    return 'FaceIdSensorData(rgb: $rgb, xyz: $xyz, width: $width, height: $height)';
+    return 'FaceIdSensorData(rgb: $rgb, xyz: $xyz, depthValues: $depthValues, width: $width, height: $height)';
   }
 
   @override
@@ -172,6 +190,8 @@ class _$_FaceIdSensorData implements _FaceIdSensorData {
             other is _$_FaceIdSensorData &&
             const DeepCollectionEquality().equals(other.rgb, rgb) &&
             const DeepCollectionEquality().equals(other.xyz, xyz) &&
+            const DeepCollectionEquality()
+                .equals(other.depthValues, depthValues) &&
             (identical(other.width, width) || other.width == width) &&
             (identical(other.height, height) || other.height == height));
   }
@@ -182,6 +202,7 @@ class _$_FaceIdSensorData implements _FaceIdSensorData {
       runtimeType,
       const DeepCollectionEquality().hash(rgb),
       const DeepCollectionEquality().hash(xyz),
+      const DeepCollectionEquality().hash(depthValues),
       width,
       height);
 
@@ -203,6 +224,7 @@ abstract class _FaceIdSensorData implements FaceIdSensorData {
   const factory _FaceIdSensorData(
       {@Uint8ListConverter() required final Uint8List rgb,
       @Float64ListConverter() required final Float64List xyz,
+      @Float32ListConverter() required final Float32List depthValues,
       required final int width,
       required final int height}) = _$_FaceIdSensorData;
 
@@ -215,6 +237,9 @@ abstract class _FaceIdSensorData implements FaceIdSensorData {
   @override
   @Float64ListConverter()
   Float64List get xyz;
+  @override
+  @Float32ListConverter()
+  Float32List get depthValues;
   @override
   int get width;
   @override

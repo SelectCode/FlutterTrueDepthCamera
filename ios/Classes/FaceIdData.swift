@@ -10,6 +10,7 @@ import Foundation
 struct FaceIdData {
     var XYZ: [[Float32]]
     var RGB: [[UInt8]]
+    var depthValues: [Float32]
     var width: Int32
     var height: Int32
 }

@@ -101,6 +101,11 @@ class FLNativeView: NSObject, FlutterPlatformView {
                     data in
                     result(data)
                 })
+                case "get_depth_values":
+                    self.depthValuesSnapshot({
+                        data in
+                        result(data)
+                    })
             case "dispose":
                 self.dispose {
                     result(nil);
@@ -209,6 +214,13 @@ class FLNativeView: NSObject, FlutterPlatformView {
         }
     }
 
+    func depthValuesSnapshot(_ onData: @escaping (Any) -> Void) -> Void {
+            scannerController!.getDepthValuesSnapshot { data in
+
+                onData(FlutterStandardTypedData(float32: Data(data.flatMap {$0.bytes})))
+            }
+        }
+
     func snapshot(_ onData: @escaping (Dictionary<String, Any?>) -> Void) -> Void {
         if (disposed) {
             return;
@@ -251,13 +263,18 @@ class FLNativeView: NSObject, FlutterPlatformView {
                 Float64($0).bytes
             }
         }))
+        let depthValues = FlutterStandardTypedData(float32: Data(
+                data.depthValues.flatMap {
+                    $0.bytes
+                }
+        ))
 
         return [
             "width": width,
             "height": height,
             "xyz": xyz,
-            "rgb": rgb
-
+            "rgb": rgb,
+            "depthValues": depthValues
         ]
     }
 

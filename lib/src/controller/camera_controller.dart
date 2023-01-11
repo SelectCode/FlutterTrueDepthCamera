@@ -49,6 +49,10 @@ abstract class CameraController {
   /// `interval` specifies the interval in milliseconds between two snapshots.
   Stream<FaceIdSensorData> getFaceIdSensorDataStream(int interval);
 
+  Future<List<double>> getDepthValues();
+
+  Stream<List<double>> getDepthValueStream(int interval);
+
   bool checkForObject({
     required FaceIdSensorData data,
     required double minCoverage,

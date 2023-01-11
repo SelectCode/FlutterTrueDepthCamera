@@ -75,6 +75,8 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     private var snapshotCallback: ((FaceIdData, NativeCameraImage) -> Void)?
     private var calibrationCallback: ((AVCameraCalibrationData) -> Void)?
     private var faceIdSensorDataCallback: ((FaceIdData) -> Void)?
+    private var depthValuesCallback: (([Float32]) -> Void)?
+
 
     func getCalibrationData(_ callback: @escaping (AVCameraCalibrationData) -> Void) {
         calibrationCallback = callback
@@ -82,6 +84,10 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
     func getFaceIdSensorDataSnapshot(_ callback: @escaping (FaceIdData) -> Void) {
         faceIdSensorDataCallback = callback
+    }
+
+    func getDepthValuesSnapshot(_ callback: @escaping ([Float32]) -> Void) {
+        depthValuesCallback = callback
     }
 
     /// Returns [FaceIdData] and a [NativeCameraImage] for the next processed frame.
@@ -207,6 +213,10 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
                 return
             }
 
+            if(self.depthValuesCallback != nil) {
+                self.depthValuesCallback!(depthData.depthDataMap.depthValues()!)
+            }
+
             if (self.bytesCallback != nil) {
                 self.bytesCallback!(self.getNativeCameraImage(sampleBuffer: sampleBuffer))
                 self.bytesCallback = nil
@@ -319,7 +329,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             return [x, y, z]
         }
 
-        return FaceIdData(XYZ: xyz, RGB: rgb, width: Int32(colorImage.width), height: Int32(colorImage.height))
+        return FaceIdData(XYZ: xyz, RGB: rgb,depthValues: depthValues, width: Int32(colorImage.width), height: Int32(colorImage.height))
     }
 
 

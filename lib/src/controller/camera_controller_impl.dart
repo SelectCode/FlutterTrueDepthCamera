@@ -203,24 +203,37 @@ class CameraControllerImpl implements CameraController {
     final centerCount =
         (centerWidthRange.upperBound - centerWidthRange.lowerBound) *
             (centerHeightRange.upperBound - centerHeightRange.lowerBound);
-    const depthRange = Range(-1, 0.3);
-    List<int> xs = List.empty(growable: true);
-    List<double> depths = List.empty(growable: true);
+    const depthRange = Range(0.15, 0.3);
+    int matchingValues = 0;
 
-    for (int i = 0; i < data.xyz.length; i++) {
+    for (int i = 0; i < data.depthValues.length; i++) {
       final x = i % width;
       final y = i / width;
-      final value = data.xyz[i];
+      final value = data.depthValues[i];
       if (depthRange.contains(value) &&
           centerWidthRange.contains(x) &&
           centerHeightRange.contains(y.toInt())) {
-        xs.add(x);
-        depths.add(value);
+        matchingValues++;
       }
     }
 
-    final coverage = xs.length / centerCount;
+    final coverage = matchingValues / centerCount;
     return coverage > minCoverage;
+  }
+
+  @override
+  Stream<List<double>> getDepthValueStream(int interval) {
+    return Stream.periodic(Duration(milliseconds: interval), (i) async {
+      final data = await getDepthValues();
+      return data;
+    }).asyncMap((event) => event);
+  }
+
+  @override
+  Future<List<double>> getDepthValues() async {
+    final result =
+        await methodChannel.invokeMethod<Float32List>("get_depth_values");
+    return result!.toList();
   }
 }
 
