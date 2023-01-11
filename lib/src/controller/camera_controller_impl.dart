@@ -160,9 +160,17 @@ class CameraControllerImpl implements CameraController {
   @override
   Future<CvCameraCalibrationData> getCalibrationData() async {
     final response = Map<String, dynamic>.from(
-        await methodChannel.invokeMethod("get_calibration_data"));
-    print(response);
+      await methodChannel.invokeMethod("get_calibration_data"),
+    );
     return CvCameraCalibrationData.fromJson(response);
+  }
+
+  @override
+  Future<FaceIdSensorData> getFaceIdSensorData() async {
+    final response = Map<String, dynamic>.from(
+      await methodChannel.invokeMethod("get_face_id_sensor_data"),
+    );
+    return FaceIdSensorData.fromJson(response);
   }
 }
 

@@ -74,10 +74,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var snapshotCallback: ((FaceIdData, NativeCameraImage) -> Void)?
     private var calibrationCallback: ((AVCameraCalibrationData) -> Void)?
-
-    func getCalibrationData(_ callback: @escaping (AVCameraCalibrationData) -> Void) {
-        calibrationCallback = callback
-    }
+    private var faceIdSensorDataCallback: ((FaceIdData) -> Void)?
 
     func getCalibrationData(_ callback: @escaping (AVCameraCalibrationData) -> Void) {
         calibrationCallback = callback
@@ -216,7 +213,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
             }
 
-            if(self.calibrationCallback != nil) {
+            if (self.calibrationCallback != nil) {
                 self.calibrationCallback!(depthData.cameraCalibrationData!)
                 self.calibrationCallback = nil
             }

@@ -91,6 +91,11 @@ class FLNativeView: NSObject, FlutterPlatformView {
                     data in
                     result(data)
                 })
+            case "get_face_id_sensor_data":
+                self.faceIdSensorDataSnapshot({
+                    data in
+                    result(data)
+                })
             case "get_calibration_data":
                 self.calibrationDataSnapshot({
                     data in
@@ -195,6 +200,13 @@ class FLNativeView: NSObject, FlutterPlatformView {
             "y": NSNumber(value: col.y),
             "z": NSNumber(value: col.z)
         ]
+    }
+
+    func faceIdSensorDataSnapshot(_ onData: @escaping (Dictionary<String, Any?>) -> Void) -> Void {
+        scannerController!.getFaceIdSensorDataSnapshot { data in
+            let encoded = self.encodeFaceIdSensorData(data)
+            onData(encoded)
+        }
     }
 
     func snapshot(_ onData: @escaping (Dictionary<String, Any?>) -> Void) -> Void {
