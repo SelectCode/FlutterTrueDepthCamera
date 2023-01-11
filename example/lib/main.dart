@@ -71,9 +71,16 @@ class _MyAppState extends State<MyApp> {
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.flip_camera_ios),
+                      icon: const Icon(Icons.compass_calibration),
                       onPressed: () async {
                         final result = await _controller.getCalibrationData();
+                        print(result);
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.face),
+                      onPressed: () async {
+                        final result = await _controller.getFaceIdSensorData();
                         print(result);
                       },
                     ),
