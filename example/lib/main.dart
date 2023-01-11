@@ -128,6 +128,7 @@ class _ObjectDetectionDisplayState extends State<ObjectDetectionDisplay> {
         data: event,
         minCoverage: 0.5,
       );
+      print(isDetectingObject);
       setState(() {
         this.isDetectingObject = isDetectingObject;
       });

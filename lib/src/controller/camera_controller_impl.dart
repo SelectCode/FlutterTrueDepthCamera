@@ -190,11 +190,12 @@ class CameraControllerImpl implements CameraController {
       throw RangeError("minCoverage must be between 0 and 1");
     }
     final width = data.width;
+    final height = data.height;
+
     final centerWidthRange = Range(
       (width * 0.3).toInt(),
       (width * 0.7).toInt(),
     );
-    final height = data.height;
     final centerHeightRange = Range(
       (height * 0.3).toInt(),
       (height * 0.7).toInt(),
@@ -202,9 +203,8 @@ class CameraControllerImpl implements CameraController {
     final centerCount =
         (centerWidthRange.upperBound - centerWidthRange.lowerBound) *
             (centerHeightRange.upperBound - centerHeightRange.lowerBound);
-    const depthRange = Range(0.15, 0.3);
+    const depthRange = Range(-1, 0.3);
     List<int> xs = List.empty(growable: true);
-    List<int> ys = List.empty(growable: true);
     List<double> depths = List.empty(growable: true);
 
     for (int i = 0; i < data.xyz.length; i++) {
@@ -215,16 +215,12 @@ class CameraControllerImpl implements CameraController {
           centerWidthRange.contains(x) &&
           centerHeightRange.contains(y.toInt())) {
         xs.add(x);
-        ys.add(y.toInt());
         depths.add(value);
       }
     }
 
     final coverage = xs.length / centerCount;
-
-    final hasMinCoverage = coverage > minCoverage;
-
-    return hasMinCoverage;
+    return coverage > minCoverage;
   }
 }
 
