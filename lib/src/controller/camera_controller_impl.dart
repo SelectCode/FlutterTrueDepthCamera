@@ -168,6 +168,13 @@ class CameraControllerImpl implements CameraController {
     );
     return FaceIdSensorData.fromJson(response);
   }
+
+  @override
+  Stream<FaceIdSensorData> getFaceIdSensorDataStream(int interval) {
+    return Stream.periodic(Duration(milliseconds: interval), (i) async {
+      return await getFaceIdSensorData();
+    }).asyncMap((event) => event);
+  }
 }
 
 /// Params that are passed to [CameraControllerImpl._savePictureHandler].

@@ -43,4 +43,9 @@ abstract class CameraController {
 
   /// Returns a snapshot of the current [FaceIdSensorData].
   Future<FaceIdSensorData> getFaceIdSensorData();
+
+  /// Returns a stream of snapshots of the current [FaceIdSensorData].
+  ///
+  /// `interval` specifies the interval in milliseconds between two snapshots.
+  Stream<FaceIdSensorData> getFaceIdSensorDataStream(int interval);
 }
