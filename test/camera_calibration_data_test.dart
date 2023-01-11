@@ -2,7 +2,10 @@ import 'dart:typed_data';
 
 import 'package:cv_camera/cv_camera.dart';
 import 'package:cv_camera/cv_camera_method_channel.dart';
-import 'package:cv_camera/src/models/calibration_data.dart';
+import 'package:cv_camera/src/models/calibration_data/calibration_data.dart';
+import 'package:cv_camera/src/models/calibration_data/cg_point.dart';
+import 'package:cv_camera/src/models/calibration_data/cg_size.dart';
+import 'package:cv_camera/src/models/calibration_data/cg_vector.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -48,7 +51,9 @@ void main() {
     expect(
       tracker.calls,
       contains(
-        const MethodCall('get_calibration_data', null),
+        predicate<MethodCall>(
+          (call) => call.method == 'get_calibration_data',
+        ),
       ),
     );
   });
