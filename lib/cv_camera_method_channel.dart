@@ -16,6 +16,9 @@ class MethodChannelCvCamera extends CvCameraPlatform {
   @visibleForTesting
   final eventChannel = const EventChannel('cv_camera/events');
 
+  final objectDetectionEventChannel =
+      const EventChannel('cv_camera/objectDetection');
+
   @override
   CameraController getCameraController({
     LensDirection? lensDirection,
@@ -25,6 +28,7 @@ class MethodChannelCvCamera extends CvCameraPlatform {
       lensDirection: lensDirection,
       methodChannel: methodChannel,
       eventChannel: eventChannel,
+      objectDetectionEventChannel: objectDetectionEventChannel,
       clock: clock,
     );
   }

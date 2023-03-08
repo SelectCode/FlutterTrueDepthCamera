@@ -13,10 +13,12 @@ import UIKit
 class FLNativeViewFactory: NSObject, FlutterPlatformViewFactory {
     private var methodChannel: FlutterMethodChannel
     private var eventChannel: FlutterEventChannel
+    private var objectChangedEventChannel: FlutterEventChannel
 
-    init(methodChannel: FlutterMethodChannel, eventChannel: FlutterEventChannel) {
+    init(methodChannel: FlutterMethodChannel, eventChannel: FlutterEventChannel, objectChangedEventChannel: FlutterEventChannel) {
         self.methodChannel = methodChannel
         self.eventChannel = eventChannel
+        self.objectChangedEventChannel = objectChangedEventChannel
         super.init()
     }
 
@@ -29,7 +31,7 @@ class FLNativeViewFactory: NSObject, FlutterPlatformViewFactory {
                 frame: frame,
                 viewIdentifier: viewId,
                 arguments: args as! [String: Any]?,
-                methodChannel: methodChannel, eventChannel: eventChannel
+                methodChannel: methodChannel, eventChannel: eventChannel, objectChangedEventChannel: objectChangedEventChannel
         )
     }
 
@@ -47,7 +49,9 @@ class FLNativeView: NSObject, FlutterPlatformView {
     private var scannerController: ScannerController?
     private var methodChannel: FlutterMethodChannel!
     private var eventChannel: FlutterEventChannel!
+    private var objectChangedEventChannel: FlutterEventChannel!
     private let imageStreamHandler: ImageStreamHandler!
+    private let onObjectDetectedChangedStreamHandler: ObjectDetectedChangedHandler!
 
     @available(iOS 11.1, *)
     init(
@@ -55,11 +59,13 @@ class FLNativeView: NSObject, FlutterPlatformView {
             viewIdentifier viewId: Int64,
             arguments args: [String: Any]?,
             methodChannel: FlutterMethodChannel,
-            eventChannel: FlutterEventChannel
+            eventChannel: FlutterEventChannel,
+            objectChangedEventChannel: FlutterEventChannel
     ) {
         _view = UIView()
         self.eventChannel = eventChannel
         self.methodChannel = methodChannel
+        self.objectChangedEventChannel = objectChangedEventChannel
         imageStreamHandler = ImageStreamHandler()
         var lensDirection: LensDirection;
         switch (args!["lensDirection"] as! String) {
@@ -70,11 +76,13 @@ class FLNativeView: NSObject, FlutterPlatformView {
             lensDirection = .front
         }
         scannerController = ScannerController(lensDirection: lensDirection)
+        onObjectDetectedChangedStreamHandler = ObjectDetectedChangedHandler(scannerController: scannerController!)
         super.init()
 
         self.createNativeView(view: self.view())
 
         self.eventChannel.setStreamHandler(self.imageStreamHandler)
+        self.objectChangedEventChannel.setStreamHandler(self.onObjectDetectedChangedStreamHandler)
         self.methodChannel.setMethodCallHandler({
             (call, result) in
             switch (call.method) {
@@ -83,6 +91,12 @@ class FLNativeView: NSObject, FlutterPlatformView {
                 result("")
             case "stopImageStream":
                 self.stopImageStream()
+                result("")
+            case "startObjectDetection":
+                self.startObjectDetectedChangedStream()
+                result("")
+            case "stopObjectDetection":
+                self.stopObjectDetectedChangedStream()
                 result("")
             case "previewSize":
                 result(self.getPreviewSize())
@@ -101,11 +115,11 @@ class FLNativeView: NSObject, FlutterPlatformView {
                     data in
                     result(data)
                 })
-                case "get_depth_values":
-                    self.depthValuesSnapshot({
-                        data in
-                        result(data)
-                    })
+            case "get_depth_values":
+                self.depthValuesSnapshot({
+                    data in
+                    result(data)
+                })
             case "dispose":
                 self.dispose {
                     result(nil);
@@ -215,11 +229,13 @@ class FLNativeView: NSObject, FlutterPlatformView {
     }
 
     func depthValuesSnapshot(_ onData: @escaping (Any) -> Void) -> Void {
-            scannerController!.getDepthValuesSnapshot { data in
+        scannerController!.getDepthValuesSnapshot { data in
 
-                onData(FlutterStandardTypedData(float32: Data(data.flatMap {$0.bytes})))
-            }
+            onData(FlutterStandardTypedData(float32: Data(data.flatMap {
+                $0.bytes
+            })))
         }
+    }
 
     func snapshot(_ onData: @escaping (Dictionary<String, Any?>) -> Void) -> Void {
         if (disposed) {
@@ -242,6 +258,24 @@ class FLNativeView: NSObject, FlutterPlatformView {
         }
 
     }
+
+    func startObjectDetectedChangedStream() {
+        if (disposed) {
+            return;
+        }
+
+        scannerController?.setOnObjectDetectedChangedListener({ (detected) in
+            self.onObjectDetectedChangedStreamHandler.add(detected)
+        })
+    }
+
+    func stopObjectDetectedChangedStream() {
+        if (disposed) {
+            return;
+        }
+        scannerController?.removeOnObjectDetectedChangedListener()
+    }
+
 
     func startImageStream() {
         if (disposed) {
@@ -320,6 +354,37 @@ class FLNativeView: NSObject, FlutterPlatformView {
 
     }
 }
+
+class ObjectDetectedChangedHandler: NSObject, FlutterStreamHandler {
+
+
+    private var eventSink: FlutterEventSink?
+
+    private var scannerController: ScannerController
+
+    init(scannerController: ScannerController) {
+        self.scannerController = scannerController
+    }
+
+    func add(_ detected: Bool) {
+        eventSink?(detected)
+    }
+
+    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+        eventSink = events
+        return nil;
+    }
+
+    func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        cancelListener()
+        return nil;
+    }
+
+    func cancelListener() {
+        scannerController.removeOnObjectDetectedChangedListener()
+    }
+}
+
 
 class ImageStreamHandler: NSObject, FlutterStreamHandler {
 

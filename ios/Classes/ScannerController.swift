@@ -76,6 +76,8 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     private var calibrationCallback: ((AVCameraCalibrationData) -> Void)?
     private var faceIdSensorDataCallback: ((FaceIdData) -> Void)?
     private var depthValuesCallback: (([Float32]) -> Void)?
+    private var onObjectDetectedChanged: ((Bool) -> Void)?
+    private var lastDetected: Bool = false
 
 
     func getCalibrationData(_ callback: @escaping (AVCameraCalibrationData) -> Void) {
@@ -90,11 +92,21 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
         depthValuesCallback = callback
     }
 
+
     /// Returns [FaceIdData] and a [NativeCameraImage] for the next processed frame.
     func getSnapshot(_ callback: @escaping (FaceIdData, NativeCameraImage) -> Void) {
 
         snapshotCallback = callback
     }
+
+    func setOnObjectDetectedChangedListener(_ callback: @escaping (Bool) -> Void) {
+        onObjectDetectedChanged = callback
+    }
+
+    func removeOnObjectDetectedChangedListener() {
+        onObjectDetectedChanged = nil
+    }
+
 
     /// Starts setup for camera.
     func prepare(_ callback: @escaping (Error?) -> Void) {
@@ -213,8 +225,20 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
                 return
             }
 
-            if(self.depthValuesCallback != nil) {
-                self.depthValuesCallback!(depthData.depthDataMap.depthValues()!)
+            let depthValues = depthData.depthDataMap.depthValues()!;
+
+            if (self.onObjectDetectedChanged != nil) {
+                let width = CVPixelBufferGetWidth(videoPixelBuffer)
+                let height = CVPixelBufferGetHeight(videoPixelBuffer)
+                let hasDetected = self.checkForObject(depthValues: depthValues, width: width, height: height)
+                if (self.lastDetected != hasDetected) {
+                    self.onObjectDetectedChanged!(hasDetected)
+                    self.lastDetected = hasDetected
+                }
+            }
+
+            if (self.depthValuesCallback != nil) {
+                self.depthValuesCallback!(depthValues)
             }
 
             if (self.bytesCallback != nil) {
@@ -245,6 +269,32 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
     }
 
+    func checkForObject(depthValues: [Float32], width: Int, height: Int) -> Bool {
+        let centerWidthRange = Int(Double(width) * 0.3)...Int(Double(width) * 0.7)
+        let centerHeightRange = Int(Double(height) * 0.3)...Int(Double(height) * 0.7)
+        let centerCount = (centerWidthRange.upperBound - centerWidthRange.lowerBound) * (centerHeightRange.upperBound - centerHeightRange.lowerBound)
+        let depthRange = 0.15...0.3
+        var xs: [Int] = []
+        var ys: [Int] = []
+        var depths: [Float32] = []
+
+        for (i, value) in depthValues.enumerated() {
+            let x = i % width
+            let y = i / width
+            if depthRange.contains(Double(value)) && centerWidthRange.contains(x) && centerHeightRange.contains(y) {
+                xs.append(x)
+                ys.append(y)
+                depths.append(value)
+            }
+        }
+
+        let coverage = Double(xs.count) / Double(centerCount)
+
+        let minCoverage = coverage > 0.5
+
+        return minCoverage
+    }
+
 
     /// Decodes an array of [Plane].
     private func decodePlanes(planes: [NSDictionary]) -> [Plane] {
@@ -271,11 +321,37 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     func getPointCloud(depthData: AVDepthData, cgColorImage: CGImage, sampleBuffer: CMSampleBuffer) {
         let depthPixelBuffer = depthData.depthDataMap
         let depthWidth = CVPixelBufferGetWidth(depthPixelBuffer)
+        let depthHeight = CVPixelBufferGetHeight(depthPixelBuffer)
+
+        // Undistort depth data using lensDistortionPointForPoint
+        var maybePixelBuffer: CVPixelBuffer? = nil
+        let status = CVPixelBufferCreate(nil, depthWidth, depthHeight, kCVPixelFormatType_OneComponent16, nil, &maybePixelBuffer)
+        guard status == kCVReturnSuccess, let undistortedBuffer = maybePixelBuffer else {
+            return
+        }
+        print("undistortedBufferSize: \(CVPixelBufferGetDataSize(undistortedBuffer))")
+        CVPixelBufferLockBaseAddress(depthPixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        CVPixelBufferLockBaseAddress(undistortedBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        // map every point in depthPixelBuffer to undistortedBuffer using lensDistortionPointForPoint
+        let depthDataMap = CVPixelBufferGetBaseAddress(depthPixelBuffer)!.assumingMemoryBound(to: Float32.self)
+        let undistortedDataMap = CVPixelBufferGetBaseAddress(undistortedBuffer)!.assumingMemoryBound(to: Float32.self)
+        let depthDataMapSize = depthWidth * depthHeight
+        let lensDistortionLookupTable = depthData.cameraCalibrationData!.lensDistortionLookupTable
+        let opticalCenter = depthData.cameraCalibrationData!.lensDistortionCenter
+        let float32Size = MemoryLayout<Float32>.size
+        for i in 0..<depthDataMapSize {
+            let undistortedPoint = lensDistortionPointForPoint(point: CGPoint(x: i % depthWidth, y: i / depthHeight),
+                    lookupTable: lensDistortionLookupTable!,
+                    opticalCenter: opticalCenter,
+                    imageSize: CGSize(width: depthWidth, height: depthHeight))
+                    print(i);
+                    undistortedDataMap.advanced(by: i * float32Size).pointee = depthDataMap.advanced(by: float32Size * ( Int(undistortedPoint.y) * depthWidth + Int(undistortedPoint.x))).pointee
+        }
+        CVPixelBufferUnlockBaseAddress(depthPixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        CVPixelBufferUnlockBaseAddress(undistortedBuffer, CVPixelBufferLockFlags(rawValue: 0))
 
 
-        //        guard let pixelDataColor = resizedColorImage.createCGImage().pixelData() else { fatalError() }
-
-        let depthValues: [Float32]? = depthPixelBuffer.depthValues()
+        let depthValues: [Float32]? = undistortedBuffer.depthValues()
         guard let depthValues = depthValues else {
             return
         }
@@ -295,6 +371,53 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             self.snapshotCallback = nil
         }
 
+    }
+
+    func lensDistortionPointForPoint(point: CGPoint,
+                                     lookupTable: Data,
+                                     opticalCenter: CGPoint,
+                                     imageSize: CGSize) -> CGPoint {
+        // The lookup table holds the relative radial magnification for n linearly spaced radii.
+        // The first position corresponds to radius = 0
+        // The last position corresponds to the largest radius found in the image.
+
+        // Determine the maximum radius.
+        let delta_ocx_max = Float(max(opticalCenter.x, imageSize.width - opticalCenter.x));
+        let delta_ocy_max = Float(max(opticalCenter.y, imageSize.height - opticalCenter.y));
+        let r_max = sqrtf(delta_ocx_max * delta_ocx_max + delta_ocy_max * delta_ocy_max);
+
+        // Determine the vector from the optical center to the given point.
+        let v_point_x = Float(point.x - opticalCenter.x);
+        let v_point_y = Float(point.y - opticalCenter.y);
+
+        // Determine the radius of the given point.
+        let r_point = sqrtf(v_point_x * v_point_x + v_point_y * v_point_y);
+
+        // Look up the relative radial magnification to apply in the provided lookup table
+        let magnification: Float;
+        let lookupTableValues = lookupTable;
+        let lookupTableCount = UInt(lookupTable.count / MemoryLayout<Float>.size);
+
+        if (r_point < r_max) {
+            // Linear interpolation
+            let val = r_point * Float(lookupTableCount - 1) / r_max;
+            let idx = Int(val);
+            let frac = val - Float(idx);
+
+            let mag_1: Float = Float(lookupTableValues[idx]);
+            let mag_2: Float = Float(lookupTableValues[idx + 1]);
+
+            magnification = (1.0 - frac) * mag_1 + frac * mag_2;
+        } else {
+            magnification = Float(lookupTableValues[Int(lookupTableCount - 1)]);
+        }
+
+        // Apply radial magnification
+        let new_v_point_x = v_point_x + magnification * v_point_x;
+        let new_v_point_y = v_point_y + magnification * v_point_y;
+
+        // Construct output
+        return CGPointMake(CGFloat(Float(opticalCenter.x) + new_v_point_x), CGFloat(Float(opticalCenter.y) + new_v_point_y));
     }
 
     /// Returns a decoded [NativeCameraImage] from a Map.
@@ -329,7 +452,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             return [x, y, z]
         }
 
-        return FaceIdData(XYZ: xyz, RGB: rgb,depthValues: depthValues, width: Int32(colorImage.width), height: Int32(colorImage.height))
+        return FaceIdData(XYZ: xyz, RGB: rgb, depthValues: depthValues, width: Int32(colorImage.width), height: Int32(colorImage.height))
     }
 
 

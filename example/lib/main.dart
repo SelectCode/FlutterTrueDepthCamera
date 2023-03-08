@@ -121,19 +121,19 @@ class ObjectDetectionDisplay extends StatefulWidget {
 }
 
 class _ObjectDetectionDisplayState extends State<ObjectDetectionDisplay> {
-  late StreamSubscription<List<double>> _sensorStream;
+  late StreamSubscription<bool> _sensorStream;
 
   @override
   void initState() {
     super.initState();
-    _sensorStream =
-        widget.controller.getDepthValueStream(50).listen((depthValues) {
-      final isDetectingObject = widget.controller.checkForObject(
-        depthValues: depthValues,
-        minCoverage: 0.5,
-      );
+    _initStream();
+  }
+
+  Future<void> _initStream() async {
+    _sensorStream = (await widget.controller.startObjectDetectionStream())
+        .listen((isDetecting) {
       setState(() {
-        this.isDetectingObject = isDetectingObject;
+        isDetectingObject = isDetecting;
       });
     });
   }

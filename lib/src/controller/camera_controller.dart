@@ -44,17 +44,9 @@ abstract class CameraController {
   /// Returns a snapshot of the current [FaceIdSensorData].
   Future<FaceIdSensorData> getFaceIdSensorData();
 
-  /// Returns a stream of snapshots of the current [FaceIdSensorData].
-  ///
-  /// `interval` specifies the interval in milliseconds between two snapshots.
-  Stream<FaceIdSensorData> getFaceIdSensorDataStream(int interval);
-
   Future<List<double>> getDepthValues();
 
-  Stream<List<double>> getDepthValueStream(int interval);
+  Future<Stream<bool>> startObjectDetectionStream();
 
-  bool checkForObject({
-    required List<double> depthValues,
-    required double minCoverage,
-  });
+  Future<void> stopObjectDetectionStream();
 }

@@ -41,18 +41,4 @@ void main() {
     final result = await sut.getDepthValues();
     expect(result, TakePictureTestResources.depthDataSerialized.depthValues);
   });
-
-  test('should emit three snapshots', () async {
-    final stream = sut.getDepthValueStream(100);
-
-    final startTime = DateTime.now();
-    final snapshots = await stream.take(3).toList();
-    final endTime = DateTime.now();
-    final duration = endTime.difference(startTime).inMilliseconds;
-    expect(duration, lessThan(350));
-    expect(duration, greaterThan(299));
-
-    expect(snapshots.length, 3);
-    expect(snapshots, List.filled(3, depthValues.toList()));
-  });
 }
