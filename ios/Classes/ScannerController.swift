@@ -325,28 +325,55 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
         // Undistort depth data using lensDistortionPointForPoint
         var maybePixelBuffer: CVPixelBuffer? = nil
-        let status = CVPixelBufferCreate(nil, depthWidth, depthHeight, kCVPixelFormatType_OneComponent16, nil, &maybePixelBuffer)
+        let format = CVPixelBufferGetPixelFormatType(depthPixelBuffer)
+        let status = CVPixelBufferCreate(nil, depthWidth, depthHeight, format, nil, &maybePixelBuffer)
         guard status == kCVReturnSuccess, let undistortedBuffer = maybePixelBuffer else {
             return
         }
-        print("undistortedBufferSize: \(CVPixelBufferGetDataSize(undistortedBuffer))")
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(depthPixelBuffer)
+
         CVPixelBufferLockBaseAddress(depthPixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
         CVPixelBufferLockBaseAddress(undistortedBuffer, CVPixelBufferLockFlags(rawValue: 0))
         // map every point in depthPixelBuffer to undistortedBuffer using lensDistortionPointForPoint
         let depthDataMap = CVPixelBufferGetBaseAddress(depthPixelBuffer)!.assumingMemoryBound(to: Float32.self)
         let undistortedDataMap = CVPixelBufferGetBaseAddress(undistortedBuffer)!.assumingMemoryBound(to: Float32.self)
-        let depthDataMapSize = depthWidth * depthHeight
-        let lensDistortionLookupTable = depthData.cameraCalibrationData!.lensDistortionLookupTable
+        let lensDistortionLookupTable = depthData.cameraCalibrationData!.lensDistortionLookupTable!
         let opticalCenter = depthData.cameraCalibrationData!.lensDistortionCenter
         let float32Size = MemoryLayout<Float32>.size
-        for i in 0..<depthDataMapSize {
-            let undistortedPoint = lensDistortionPointForPoint(point: CGPoint(x: i % depthWidth, y: i / depthHeight),
-                    lookupTable: lensDistortionLookupTable!,
-                    opticalCenter: opticalCenter,
-                    imageSize: CGSize(width: depthWidth, height: depthHeight))
-                    print(i);
-                    undistortedDataMap.advanced(by: i * float32Size).pointee = depthDataMap.advanced(by: float32Size * ( Int(undistortedPoint.y) * depthWidth + Int(undistortedPoint.x))).pointee
+        for plane in 0..<CVPixelBufferGetPlaneCount(depthPixelBuffer) {
+            let dest = CVPixelBufferGetBaseAddressOfPlane(undistortedBuffer, plane)
+            let source = CVPixelBufferGetBaseAddressOfPlane(depthPixelBuffer, plane)
+            let height = CVPixelBufferGetHeightOfPlane(depthPixelBuffer, plane)
+            let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(depthPixelBuffer, plane)
+
+            // loop over all points in plane
+            for y in 0..<height {
+                let destRow = dest!.advanced(by: y * bytesPerRow)
+                let sourceRow = source!.advanced(by: y * bytesPerRow)
+                for x in 0..<bytesPerRow / float32Size {
+                    let destPixel = destRow.advanced(by: x * float32Size)
+                    let sourcePixel = sourceRow.advanced(by: x * float32Size)
+                    let sourceValue = sourcePixel.assumingMemoryBound(to: Float32.self).pointee
+                    let destValue = destPixel.assumingMemoryBound(to: Float32.self).pointee
+                    if sourceValue != 0 {
+                        let point = CGPoint(x: CGFloat(x), y: CGFloat(y))
+                        let undistortedPoint = self.lensDistortionPointForPoint(
+                                point: point,
+                                lookupTable: lensDistortionLookupTable,
+                                opticalCenter: opticalCenter,
+                                imageSize: CGSize(width: depthWidth, height: depthHeight)
+                        )
+                        let undistortedX = Int(undistortedPoint.x)
+                        let undistortedY = Int(undistortedPoint.y)
+                        if undistortedX >= 0 && undistortedX < depthWidth && undistortedY >= 0 && undistortedY < depthHeight {
+                            let undistortedIndex = undistortedY * depthWidth + undistortedX
+                            undistortedDataMap[undistortedIndex] = sourceValue
+                        }
+                    }
+                }
+            }
         }
+
         CVPixelBufferUnlockBaseAddress(depthPixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
         CVPixelBufferUnlockBaseAddress(undistortedBuffer, CVPixelBufferLockFlags(rawValue: 0))
 
