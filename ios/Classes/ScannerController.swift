@@ -261,20 +261,9 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
             if (self.onObjectDetectedChanged != nil) {
                 self.objectDetectionQueue.async {
-                    let start = mach_absolute_time()
                     let width = CVPixelBufferGetWidth(videoPixelBuffer)
                     let height = CVPixelBufferGetHeight(videoPixelBuffer)
                     let hasDetected = self.checkForObject(depthValues: depthValues, width: width, height: height)
-                    let elapsedMTU = mach_absolute_time() - start
-                    var timebase = mach_timebase_info()
-                    if mach_timebase_info(&timebase) == 0 {
-                        let elapsed = Double(elapsedMTU) * Double(timebase.numer) / Double(timebase.denom)
-                        let elapsedMillis = elapsed / 1000000
-                        print("render took \(elapsedMillis)ms")
-                    }
-                    else {
-                        print("timebase error")
-                    }
                     if (self.lastDetected != hasDetected) {
                         self.onObjectDetectedChanged!(hasDetected)
                         self.lastDetected = hasDetected
