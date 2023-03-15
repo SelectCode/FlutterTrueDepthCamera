@@ -79,11 +79,12 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
                 if #available(iOS 15.4, *) {
                     deviceTypes = [.builtInLiDARDepthCamera, .builtInDualCamera]
                 } else {
-                    deviceTypes = [.builtInDualCamera]
+                    print("iOS 15.4 or higher is required for usage of LiDAR")
+                    deviceTypes = [.builtInDualCamera, .builtInWideAngleCamera]
                 }
 
             }
-            self.videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes,
+            videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes,
                     mediaType: .video,
                     position: position);
     }

@@ -78,52 +78,57 @@ class FLNativeView: NSObject, FlutterPlatformView {
         self.objectChangedEventChannel.setStreamHandler(self.onObjectDetectedChangedStreamHandler)
         self.methodChannel.setMethodCallHandler({
             (call, result) in
-            switch (call.method) {
-            case "startImageStream":
-                self.startImageStream()
-                result("")
-            case "stopImageStream":
-                self.stopImageStream()
-                result("")
-            case "startObjectDetection":
-                self.startObjectDetectedChangedStream()
-                result("")
-            case "stopObjectDetection":
-                self.stopObjectDetectedChangedStream()
-                result("")
-            case "previewSize":
-                result(self.getPreviewSize())
-            case "takePicture":
-                self.snapshot({
-                    data in
-                    result(data)
-                })
-            case "get_face_id_sensor_data":
-                self.faceIdSensorDataSnapshot({
-                    data in
-                    result(data)
-                })
-            case "get_calibration_data":
-                self.calibrationDataSnapshot({
-                    data in
-                    result(data)
-                })
-            case "get_depth_values":
-                self.depthValuesSnapshot({
-                    data in
-                    result(data)
-                })
-            case "dispose":
-                self.dispose {
-                    result(nil);
+            do {
+                switch (call.method) {
+                case "startImageStream":
+                    self.startImageStream()
+                    result("")
+                case "stopImageStream":
+                    self.stopImageStream()
+                    result("")
+                case "startObjectDetection":
+                    self.startObjectDetectedChangedStream()
+                    result("")
+                case "stopObjectDetection":
+                    self.stopObjectDetectedChangedStream()
+                    result("")
+                case "previewSize":
+                    result(self.getPreviewSize())
+                case "takePicture":
+                    self.snapshot({
+                        data in
+                        result(data)
+                    })
+                case "get_face_id_sensor_data":
+                    self.faceIdSensorDataSnapshot({
+                        data in
+                        result(data)
+                    })
+                case "get_calibration_data":
+                    self.calibrationDataSnapshot({
+                        data in
+                        result(data)
+                    })
+                case "get_depth_values":
+                    self.depthValuesSnapshot({
+                        data in
+                        result(data)
+                    })
+                case "dispose":
+                    self.dispose {
+                        result(nil);
+                    }
+                case "change_lens_direction":
+                    let lensDirection = FLNativeView.getLensDirection(args: call.arguments as? [String: Any])
+                    self.scannerController!.changeLensDirection(lensDirection)
+                    result("")
+                default:
+                    result(FlutterError())
                 }
-            case "change_lens_direction":
-                let lensDirection = FLNativeView.getLensDirection(args: call.arguments as? [String: Any])
-                self.scannerController!.changeLensDirection(lensDirection)
-                result("")
-            default:
+            } catch {
                 result(FlutterError())
             }
+
 
         })
 
@@ -144,15 +149,15 @@ class FLNativeView: NSObject, FlutterPlatformView {
     }
 
     private static func getLensDirection(args: [String: Any]?) -> LensDirection {
-    var lensDirection: LensDirection;
-            switch (args!["lensDirection"] as! String) {
-            case "front": lensDirection = .front
-            case "back": lensDirection = .back
-            default:
-                print("no lens direction was provided, defaulting to front")
-                lensDirection = .front
-            }
-            return lensDirection;
+        var lensDirection: LensDirection;
+        switch (args!["lensDirection"] as! String) {
+        case "front": lensDirection = .front
+        case "back": lensDirection = .back
+        default:
+            print("no lens direction was provided, defaulting to front")
+            lensDirection = .front
+        }
+        return lensDirection;
     }
 
     private func notifyAboutInitDone() {
