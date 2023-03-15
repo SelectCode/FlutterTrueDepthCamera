@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cv_camera/cv_camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -42,12 +44,41 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
+  Future<void> copyFaceIdData(
+      FaceIdSensorData? faceIdSensorData, BuildContext context) async {
+    await Clipboard.setData(ClipboardData(
+      text: jsonEncode(faceIdSensorData?.toJson()),
+    ));
+    showCopiedToClipboardNotification(context);
+  }
+
+  Future<void> copyCalibrationData(
+      CvCameraCalibrationData? calibrationData, BuildContext context) async {
+    await Clipboard.setData(ClipboardData(
+      text: jsonEncode(calibrationData?.toJson()),
+    ));
+    showCopiedToClipboardNotification(context);
+  }
+
+  Future<void> showCopiedToClipboardNotification(BuildContext context) async {
+    const snackBar = SnackBar(
+      content: Text('Copied data to clipboard'),
+      backgroundColor: Colors.green,
+      margin: EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+      ),
+      behavior: SnackBarBehavior.floating,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Plugin example app'),
+          title: const Text('Cv camera example app'),
         ),
         body: SafeArea(
           child: Builder(builder: (context) {
@@ -61,7 +92,8 @@ class _MyAppState extends State<MyApp> {
                       onPressed: () async {
                         _shootEffectController.play();
                         final result = await _controller.takePicture();
-                        showModalBottomSheet(
+                        await copyFaceIdData(result.faceIdSensorData, context);
+                        await showModalBottomSheet(
                           context: context,
                           builder: (context) => SizedBox(
                             height: MediaQuery.of(context).size.height * 0.7,
@@ -74,16 +106,29 @@ class _MyAppState extends State<MyApp> {
                       icon: const Icon(Icons.compass_calibration),
                       onPressed: () async {
                         final result = await _controller.getCalibrationData();
-                        print(result);
+                        await copyCalibrationData(result, context);
                       },
                     ),
                     IconButton(
                       icon: const Icon(Icons.face),
                       onPressed: () async {
                         final result = await _controller.getFaceIdSensorData();
-                        print(result);
+                        await copyFaceIdData(result, context);
                       },
                     ),
+                    IconButton(
+                      icon: const Icon(Icons.switch_camera_outlined),
+                      onPressed: () async {
+                        final lensDirection = _controller.lensDirection;
+                        if (lensDirection == LensDirection.front) {
+                          await _controller
+                              .setLensDirection(LensDirection.back);
+                        } else {
+                          await _controller
+                              .setLensDirection(LensDirection.front);
+                        }
+                      },
+                    )
                   ],
                 ),
                 Expanded(

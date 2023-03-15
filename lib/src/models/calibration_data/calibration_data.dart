@@ -7,6 +7,10 @@ import 'cg_point.dart';
 import 'cg_size.dart';
 import 'cg_vector.dart';
 
+export 'cg_point.dart';
+export 'cg_size.dart';
+export 'cg_vector.dart';
+
 part 'calibration_data.freezed.dart';
 part 'calibration_data.g.dart';
 

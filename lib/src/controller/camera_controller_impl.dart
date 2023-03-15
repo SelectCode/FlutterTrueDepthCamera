@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:clock/clock.dart';
 import 'package:cv_camera/src/controller/camera_controller.dart';
-import 'package:cv_camera/src/models/calibration_data/calibration_data.dart';
 import 'package:cv_camera/src/utils/image_builder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -18,11 +17,13 @@ class CameraControllerImpl implements CameraController {
   final EventChannel eventChannel;
   final EventChannel objectDetectionEventChannel;
 
+  LensDirection _lensDirection;
+
   /// Determines which lens the camera uses.
   @override
-  late final LensDirection lensDirection;
+  LensDirection get lensDirection => _lensDirection;
   @visibleForTesting
-  late final Clock clock;
+  final Clock clock;
 
   /// The size of the current camera preview.
   ///
@@ -36,9 +37,8 @@ class CameraControllerImpl implements CameraController {
     required this.methodChannel,
     required this.objectDetectionEventChannel,
     Clock? clock,
-  }) {
-    this.clock = clock ?? const Clock();
-    this.lensDirection = lensDirection ?? LensDirection.front;
+  })  : _lensDirection = lensDirection ?? LensDirection.front,
+        clock = clock ?? const Clock() {
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
         case "initDone":
@@ -207,6 +207,15 @@ class CameraControllerImpl implements CameraController {
 
     await methodChannel.invokeMethod("stopObjectDetection");
     _isDetecting = false;
+  }
+
+  @override
+  Future<void> setLensDirection(LensDirection lensDirection) async {
+    await readyCompleter.future;
+    await methodChannel.invokeMethod("change_lens_direction", {
+      "lensDirection": lensDirection.value,
+    });
+    _lensDirection = lensDirection;
   }
 }
 

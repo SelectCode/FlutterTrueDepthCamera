@@ -49,4 +49,6 @@ abstract class CameraController {
   Future<Stream<bool>> startObjectDetectionStream();
 
   Future<void> stopObjectDetectionStream();
+
+  Future<void> setLensDirection(LensDirection lensDirection);
 }

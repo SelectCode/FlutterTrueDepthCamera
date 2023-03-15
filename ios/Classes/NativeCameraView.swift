@@ -67,19 +67,12 @@ class FLNativeView: NSObject, FlutterPlatformView {
         self.methodChannel = methodChannel
         self.objectChangedEventChannel = objectChangedEventChannel
         imageStreamHandler = ImageStreamHandler()
-        var lensDirection: LensDirection;
-        switch (args!["lensDirection"] as! String) {
-        case "front": lensDirection = .front
-        case "back": lensDirection = .back
-        default:
-            print("no lens direction was provided, defaulting to front")
-            lensDirection = .front
-        }
+        let lensDirection: LensDirection = FLNativeView.getLensDirection(args: args)
         scannerController = ScannerController(lensDirection: lensDirection)
         onObjectDetectedChangedStreamHandler = ObjectDetectedChangedHandler(scannerController: scannerController!)
         super.init()
 
-        self.createNativeView(view: self.view())
+        createNativeView(view: view())
 
         self.eventChannel.setStreamHandler(self.imageStreamHandler)
         self.objectChangedEventChannel.setStreamHandler(self.onObjectDetectedChangedStreamHandler)
@@ -124,6 +117,10 @@ class FLNativeView: NSObject, FlutterPlatformView {
                 self.dispose {
                     result(nil);
                 }
+            case "change_lens_direction":
+                let lensDirection = FLNativeView.getLensDirection(args: call.arguments as? [String: Any])
+                self.scannerController!.changeLensDirection(lensDirection)
+                result("")
             default:
                 result(FlutterError())
             }
@@ -146,8 +143,20 @@ class FLNativeView: NSObject, FlutterPlatformView {
 
     }
 
+    private static func getLensDirection(args: [String: Any]?) -> LensDirection {
+    var lensDirection: LensDirection;
+            switch (args!["lensDirection"] as! String) {
+            case "front": lensDirection = .front
+            case "back": lensDirection = .back
+            default:
+                print("no lens direction was provided, defaulting to front")
+                lensDirection = .front
+            }
+            return lensDirection;
+    }
+
     private func notifyAboutInitDone() {
-        self.methodChannel.invokeMethod("initDone", arguments: nil)
+        methodChannel.invokeMethod("initDone", arguments: nil)
     }
 
 
@@ -170,7 +179,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
         ]
     }
 
-    func calibrationDataSnapshot(_ onData: @escaping ((Dictionary<String, Any?>) -> Void)) {
+    func calibrationDataSnapshot(_ onData: @escaping (Dictionary<String, Any?>) -> Void) {
         scannerController?.getCalibrationData { (data) in
             let calibrationData = data
             let pixelSize = NSNumber(value: calibrationData.pixelSize)
@@ -214,7 +223,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
     }
 
     func parseMatrixCol(_ col: simd_float3) -> Dictionary<String, NSNumber> {
-        return [
+        [
             "x": NSNumber(value: col.x),
             "y": NSNumber(value: col.y),
             "z": NSNumber(value: col.z)
