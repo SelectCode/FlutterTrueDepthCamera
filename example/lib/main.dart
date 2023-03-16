@@ -93,6 +93,15 @@ class _MyAppState extends State<MyApp> {
                         _shootEffectController.play();
                         final result = await _controller.takePicture();
                         await copyFaceIdData(result.faceIdSensorData, context);
+                        var notZeroCount = 0;
+                        var depthValues = result.faceIdSensorData!.depthValues;
+                        for (var i = 0; i < depthValues.length; i++) {
+                          if (depthValues[i] != 0) {
+                            notZeroCount++;
+                          }
+                        }
+                        print("Out of ${depthValues.length} values, "
+                            "$notZeroCount are not zero.");
                         await showModalBottomSheet(
                           context: context,
                           builder: (context) => SizedBox(

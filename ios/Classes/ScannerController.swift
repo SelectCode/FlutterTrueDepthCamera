@@ -60,33 +60,33 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     }
 
     fileprivate func setDeviceDiscoverySession(lensDirection: LensDirection) {
-    var position: AVCaptureDevice.Position
-            var deviceTypes: [AVCaptureDevice.DeviceType]
-            // Determine which lensDirection should be used and set the [deviceTypes] accordingly.
-            switch (lensDirection) {
-            case .front: position = .front
-                if #available(iOS 11.1, *) {
-                    deviceTypes = [.builtInTrueDepthCamera]
-                } else {
-                    print("iOS 11.1 or higher is required for front camera")
-                    deviceTypes = [.builtInWideAngleCamera]
-                }
-                canUseDepthCamera = true
-            case .back: position = .back
-                canUseDepthCamera = true
-                // only use lidar when ios version is greater or equal to 15.4
-
-                if #available(iOS 15.4, *) {
-                    deviceTypes = [.builtInLiDARDepthCamera, .builtInDualCamera]
-                } else {
-                    print("iOS 15.4 or higher is required for usage of LiDAR")
-                    deviceTypes = [.builtInDualCamera, .builtInWideAngleCamera]
-                }
-
+        var position: AVCaptureDevice.Position
+        var deviceTypes: [AVCaptureDevice.DeviceType]
+        // Determine which lensDirection should be used and set the [deviceTypes] accordingly.
+        switch (lensDirection) {
+        case .front: position = .front
+            if #available(iOS 11.1, *) {
+                deviceTypes = [.builtInTrueDepthCamera]
+            } else {
+                print("iOS 11.1 or higher is required for front camera")
+                deviceTypes = [.builtInWideAngleCamera]
             }
-            videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes,
-                    mediaType: .video,
-                    position: position);
+            canUseDepthCamera = true
+        case .back: position = .back
+            canUseDepthCamera = true
+            // only use lidar when ios version is greater or equal to 15.4
+
+            if #available(iOS 15.4, *) {
+                deviceTypes = [.builtInLiDARDepthCamera, .builtInDualCamera]
+            } else {
+                print("iOS 15.4 or higher is required for usage of LiDAR")
+                deviceTypes = [.builtInDualCamera, .builtInWideAngleCamera]
+            }
+
+        }
+        videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes,
+                mediaType: .video,
+                position: position);
     }
 
     @objc func handleNotification(_ notification: Notification) {
@@ -257,7 +257,11 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
                 return
             }
 
-            let depthValues = depthData.depthDataMap.depthValues()!;
+            guard let depthValues = depthData.depthDataMap.depthValues() else {
+                return
+            }
+
+
 
             if (self.onObjectDetectedChanged != nil) {
                 self.objectDetectionQueue.async {
@@ -351,8 +355,8 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     func getPointCloud(depthData: AVDepthData, cgColorImage: CGImage, sampleBuffer: CMSampleBuffer) {
         let copiedSnapshotCallback = snapshotCallback
         let copiedFaceIdSensorDataCallback = faceIdSensorDataCallback
-        self.snapshotCallback = nil
-        self.faceIdSensorDataCallback = nil
+        snapshotCallback = nil
+        faceIdSensorDataCallback = nil
         let depthPixelBuffer = depthData.depthDataMap
         let depthWidth = CVPixelBufferGetWidth(depthPixelBuffer)
         let depthHeight = CVPixelBufferGetHeight(depthPixelBuffer)
@@ -360,54 +364,59 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
         // Undistort depth data using lensDistortionPointForPoint
         var maybePixelBuffer: CVPixelBuffer? = nil
         let format = CVPixelBufferGetPixelFormatType(depthPixelBuffer)
+//        assert(format == kCVPixelFormatType_420YpCbCr8Planar)
         let status = CVPixelBufferCreate(nil, depthWidth, depthHeight, format, nil, &maybePixelBuffer)
         guard status == kCVReturnSuccess, let undistortedBuffer = maybePixelBuffer else {
             return
         }
 
-        CVPixelBufferLockBaseAddress(depthPixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        CVPixelBufferLockBaseAddress(depthPixelBuffer, .readOnly)
         CVPixelBufferLockBaseAddress(undistortedBuffer, CVPixelBufferLockFlags(rawValue: 0))
         // map every point in depthPixelBuffer to undistortedBuffer using lensDistortionPointForPoint
-        let undistortedDataMap = CVPixelBufferGetBaseAddress(undistortedBuffer)!.assumingMemoryBound(to: Float32.self)
         let lensDistortionLookupTable = depthData.cameraCalibrationData!.lensDistortionLookupTable!
         let opticalCenter = depthData.cameraCalibrationData!.lensDistortionCenter
-        let float32Size = MemoryLayout<Float32>.size
+        print("opticalCenter \(opticalCenter)")
         var changedPixelCount = 0
-        for plane in 0..<CVPixelBufferGetPlaneCount(depthPixelBuffer) {
-            let source = CVPixelBufferGetBaseAddressOfPlane(depthPixelBuffer, plane)
-            let height = CVPixelBufferGetHeightOfPlane(depthPixelBuffer, plane)
-            let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(depthPixelBuffer, plane)
+        let depthImageSize = CGSize(width: depthWidth, height: depthHeight)
 
-            // loop over all points in plane
-            for y in 0..<height {
-                let sourceRow = source!.advanced(by: y * bytesPerRow)
-                for x in 0..<bytesPerRow / float32Size {
-                    let sourcePixel = sourceRow.advanced(by: x * float32Size)
-                    let sourceValue = sourcePixel.assumingMemoryBound(to: Float32.self).pointee
-                    if sourceValue != 0 {
-                        let point = CGPoint(x: CGFloat(x), y: CGFloat(y))
-                        let undistortedPoint = self.lensDistortionPointForPoint(
-                                point: point,
-                                lookupTable: lensDistortionLookupTable,
-                                opticalCenter: opticalCenter,
-                                imageSize: CGSize(width: depthWidth, height: depthHeight)
-                        )
-                        let undistortedX = Int(undistortedPoint.x)
-                        let undistortedY = Int(undistortedPoint.y)
-                        if undistortedX >= 0 && undistortedX < depthWidth && undistortedY >= 0 && undistortedY < depthHeight {
-                            let undistortedIndex = undistortedY * depthWidth + undistortedX
-                            undistortedDataMap[undistortedIndex] = sourceValue
-                            if(undistortedIndex != y * depthWidth + x) {
-                                changedPixelCount += 1
-                            }
-                        }
-                    }
+
+        let source = CVPixelBufferGetBaseAddressOfPlane(depthPixelBuffer, 0)
+        let height = CVPixelBufferGetHeightOfPlane(depthPixelBuffer, 0)
+        let width = CVPixelBufferGetWidthOfPlane(depthPixelBuffer, 0)
+        let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(depthPixelBuffer, 0)
+
+        let destination = CVPixelBufferGetBaseAddressOfPlane(undistortedBuffer, 0)
+
+        // loop over all points in plane
+        for y in 0..<height {
+
+            for x in 0..<width {
+                let offset = y * bytesPerRow + x * MemoryLayout<UInt8>.stride
+                let sourcePointer = source!.advanced(by: offset).assumingMemoryBound(to: UInt8.self)
+                let point = CGPoint(x: CGFloat(x), y: CGFloat(y))
+                let undistortedPoint = lensDistortionPoint(
+                        for: point,
+                        lookupTable: lensDistortionLookupTable,
+                        distortionOpticalCenter: opticalCenter,
+                        imageSize: depthImageSize
+                )
+                let undistortedX = Int(undistortedPoint.x)
+                let undistortedY = Int(undistortedPoint.y)
+                let destinationOffset = undistortedY * bytesPerRow + undistortedX * MemoryLayout<UInt8>.stride
+                if(destinationOffset >= bytesPerRow * height) {
+                    //todo: handle this
+                    continue
                 }
+                if(destinationOffset != offset) {
+                    changedPixelCount += 1
+                }
+                let destinationPointer = destination!.advanced(by: destinationOffset).assumingMemoryBound(to: UInt8.self)
+                destinationPointer.pointee = sourcePointer.pointee
             }
         }
         print("Changed \(changedPixelCount) pixels out of \(depthWidth * depthHeight) pixels after undistortion.")
 
-        CVPixelBufferUnlockBaseAddress(depthPixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        CVPixelBufferUnlockBaseAddress(depthPixelBuffer, .readOnly)
         CVPixelBufferUnlockBaseAddress(undistortedBuffer, CVPixelBufferLockFlags(rawValue: 0))
 
 
@@ -433,56 +442,53 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
     }
 
-    func lensDistortionPointForPoint(point: CGPoint,
-                                     lookupTable: Data,
-                                     opticalCenter: CGPoint,
-                                     imageSize: CGSize) -> CGPoint {
+    func lensDistortionPoint(for point: CGPoint, lookupTable: Data, distortionOpticalCenter opticalCenter: CGPoint, imageSize: CGSize) -> CGPoint {
         // The lookup table holds the relative radial magnification for n linearly spaced radii.
         // The first position corresponds to radius = 0
         // The last position corresponds to the largest radius found in the image.
 
         // Determine the maximum radius.
-        let delta_ocx_max = Float(max(opticalCenter.x, imageSize.width - opticalCenter.x));
-        let delta_ocy_max = Float(max(opticalCenter.y, imageSize.height - opticalCenter.y));
-        let r_max = sqrtf(delta_ocx_max * delta_ocx_max + delta_ocy_max * delta_ocy_max);
+        let delta_ocx_max = Float(max(opticalCenter.x, imageSize.width - opticalCenter.x))
+        let delta_ocy_max = Float(max(opticalCenter.y, imageSize.height - opticalCenter.y))
+        let r_max = sqrt(delta_ocx_max * delta_ocx_max + delta_ocy_max * delta_ocy_max)
 
         // Determine the vector from the optical center to the given point.
-        let v_point_x = Float(point.x - opticalCenter.x);
-        let v_point_y = Float(point.y - opticalCenter.y);
+        let v_point_x = Float(point.x - opticalCenter.x)
+        let v_point_y = Float(point.y - opticalCenter.y)
 
         // Determine the radius of the given point.
-        let r_point = sqrtf(v_point_x * v_point_x + v_point_y * v_point_y);
+        let r_point = sqrt(v_point_x * v_point_x + v_point_y * v_point_y)
 
         // Look up the relative radial magnification to apply in the provided lookup table
-        let magnification: Float;
-        let lookupTableValues = lookupTable;
-        let lookupTableCount = UInt(lookupTable.count / MemoryLayout<Float>.size);
+        let magnification: Float = lookupTable.withUnsafeBytes { (lookupTableValues: UnsafePointer<Float>) in
+            let lookupTableCount = lookupTable.count / MemoryLayout<Float>.size
 
-        if (r_point < r_max) {
-            // Linear interpolation
-            let val = r_point * Float(lookupTableCount - 1) / r_max;
-            let idx = Int(val);
-            let frac = val - Float(idx);
+            if r_point < r_max {
+                // Linear interpolation
+                let val = r_point * Float(lookupTableCount - 1) / r_max
+                let idx = Int(val)
+                let frac = val - Float(idx)
 
-            let mag_1: Float = Float(lookupTableValues[idx]);
-            let mag_2: Float = Float(lookupTableValues[idx + 1]);
+                let mag_1 = lookupTableValues[idx]
+                let mag_2 = lookupTableValues[idx + 1]
 
-            magnification = (1.0 - frac) * mag_1 + frac * mag_2;
-        } else {
-            magnification = Float(lookupTableValues[Int(lookupTableCount - 1)]);
+                return (1.0 - frac) * mag_1 + frac * mag_2
+            } else {
+                return lookupTableValues[lookupTableCount - 1]
+            }
         }
 
         // Apply radial magnification
-        let new_v_point_x = v_point_x + magnification * v_point_x;
-        let new_v_point_y = v_point_y + magnification * v_point_y;
+        let new_v_point_x = v_point_x + magnification * v_point_x
+        let new_v_point_y = v_point_y + magnification * v_point_y
 
         // Construct output
-        return CGPointMake(CGFloat(Float(opticalCenter.x) + new_v_point_x), CGFloat(Float(opticalCenter.y) + new_v_point_y));
+        return CGPoint(x: opticalCenter.x + CGFloat(new_v_point_x), y: opticalCenter.y + CGFloat(new_v_point_y))
     }
 
     /// Returns a decoded [NativeCameraImage] from a Map.
     func decodeNativeCameraImage(_ encoded: [String: Any]) -> NativeCameraImage {
-        return NativeCameraImage(planes: decodePlanes(planes: encoded["planes"] as! [NSDictionary]), height: encoded["height"] as! Int, width: encoded["width"] as! Int)
+        NativeCameraImage(planes: decodePlanes(planes: encoded["planes"] as! [NSDictionary]), height: encoded["height"] as! Int, width: encoded["width"] as! Int)
     }
 
     func convertRGBDtoXYZ(colorImage: CGImage, depthValues: [Float32], depthWidth: Int, cameraCalibrationData: AVCameraCalibrationData) -> FaceIdData {
@@ -542,7 +548,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
         session.beginConfiguration()
 
-        if(videoDevice.position == .front) {
+        if (videoDevice.position == .front) {
             session.sessionPreset = AVCaptureSession.Preset.vga640x480
         } else {
             session.sessionPreset = AVCaptureSession.Preset.vga640x480
