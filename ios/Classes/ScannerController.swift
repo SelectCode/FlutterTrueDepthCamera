@@ -32,9 +32,11 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     private var videoDeviceInput: AVCaptureDeviceInput!
     private var videoDeviceDiscoverySession: AVCaptureDevice.DiscoverySession!
     public var canUseDepthCamera: Bool!
+    private let enableDistortionCorrection: Bool!
 
     @available(iOS 11.1, *)
-    init(lensDirection: LensDirection) {
+    init(lensDirection: LensDirection, enableDistortionCorrection: Bool) {
+        self.enableDistortionCorrection = enableDistortionCorrection
 
         super.init();
         self.setDeviceDiscoverySession(lensDirection: lensDirection)
@@ -361,15 +363,44 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
         let depthWidth = CVPixelBufferGetWidth(depthPixelBuffer)
         let depthHeight = CVPixelBufferGetHeight(depthPixelBuffer)
 
+
+        var undistortedBuffer: CVPixelBuffer? = nil
+        if(enableDistortionCorrection) {
+            undistortedBuffer = undistortDepthValues(depthPixelBuffer: depthPixelBuffer, depthData: depthData, depthWidth: depthWidth, depthHeight: depthHeight)
+        }
+
+
+        let depthValues: [Float32]? = (undistortedBuffer ?? depthPixelBuffer).depthValues()
+        guard let depthValues = depthValues else {
+            return
+        }
+
+        guard let cameraCalibrationData = depthData.cameraCalibrationData else {
+            return
+        }
+
+
+        let faceIdData = convertRGBDtoXYZ(colorImage: cgColorImage, depthValues: depthValues, depthWidth: depthWidth, cameraCalibrationData: cameraCalibrationData)
+        print("Converted RGBD to XYZ.")
+        if (copiedFaceIdSensorDataCallback != nil) {
+            copiedFaceIdSensorDataCallback!(faceIdData)
+        }
+        if (copiedSnapshotCallback != nil) {
+            copiedSnapshotCallback!(faceIdData, decodeNativeCameraImage(getNativeCameraImage(sampleBuffer: sampleBuffer)))
+        }
+        print("Finished processing frame.")
+
+    }
+
+    private func undistortDepthValues(depthPixelBuffer: CVPixelBuffer, depthData: AVDepthData, depthWidth: Int, depthHeight: Int) -> CVPixelBuffer? {
         // Undistort depth data using lensDistortionPointForPoint
         var maybePixelBuffer: CVPixelBuffer? = nil
         let format = CVPixelBufferGetPixelFormatType(depthPixelBuffer)
 //        assert(format == kCVPixelFormatType_420YpCbCr8Planar)
         let status = CVPixelBufferCreate(nil, depthWidth, depthHeight, format, nil, &maybePixelBuffer)
         guard status == kCVReturnSuccess, let undistortedBuffer = maybePixelBuffer else {
-            return
+            return nil
         }
-
         CVPixelBufferLockBaseAddress(depthPixelBuffer, .readOnly)
         CVPixelBufferLockBaseAddress(undistortedBuffer, CVPixelBufferLockFlags(rawValue: 0))
         // map every point in depthPixelBuffer to undistortedBuffer using lensDistortionPointForPoint
@@ -418,28 +449,6 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
         CVPixelBufferUnlockBaseAddress(depthPixelBuffer, .readOnly)
         CVPixelBufferUnlockBaseAddress(undistortedBuffer, CVPixelBufferLockFlags(rawValue: 0))
-
-
-        let depthValues: [Float32]? = undistortedBuffer.depthValues()
-        guard let depthValues = depthValues else {
-            return
-        }
-
-        guard let cameraCalibrationData = depthData.cameraCalibrationData else {
-            return
-        }
-
-
-        let faceIdData = convertRGBDtoXYZ(colorImage: cgColorImage, depthValues: depthValues, depthWidth: depthWidth, cameraCalibrationData: cameraCalibrationData)
-        print("Converted RGBD to XYZ.")
-        if (copiedFaceIdSensorDataCallback != nil) {
-            copiedFaceIdSensorDataCallback!(faceIdData)
-        }
-        if (copiedSnapshotCallback != nil) {
-            copiedSnapshotCallback!(faceIdData, decodeNativeCameraImage(getNativeCameraImage(sampleBuffer: sampleBuffer)))
-        }
-        print("Finished processing frame.")
-
     }
 
     func lensDistortionPoint(for point: CGPoint, lookupTable: Data, distortionOpticalCenter opticalCenter: CGPoint, imageSize: CGSize) -> CGPoint {

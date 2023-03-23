@@ -19,6 +19,9 @@ class CameraControllerImpl implements CameraController {
 
   LensDirection _lensDirection;
 
+  @override
+  final bool enableDistortionCorrection;
+
   /// Determines which lens the camera uses.
   @override
   LensDirection get lensDirection => _lensDirection;
@@ -36,6 +39,7 @@ class CameraControllerImpl implements CameraController {
     required this.eventChannel,
     required this.methodChannel,
     required this.objectDetectionEventChannel,
+    this.enableDistortionCorrection = true,
     Clock? clock,
   })  : _lensDirection = lensDirection ?? LensDirection.front,
         clock = clock ?? const Clock() {

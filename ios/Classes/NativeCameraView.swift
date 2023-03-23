@@ -52,6 +52,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
     private var objectChangedEventChannel: FlutterEventChannel!
     private let imageStreamHandler: ImageStreamHandler!
     private let onObjectDetectedChangedStreamHandler: ObjectDetectedChangedHandler!
+    private let enableDistortionCorrection: Bool!
 
     @available(iOS 11.1, *)
     init(
@@ -67,7 +68,9 @@ class FLNativeView: NSObject, FlutterPlatformView {
         self.methodChannel = methodChannel
         self.objectChangedEventChannel = objectChangedEventChannel
         imageStreamHandler = ImageStreamHandler()
-        let lensDirection: LensDirection = FLNativeView.getLensDirection(args: args)
+        let cameraOptions = FLNativeView.parseCameraOptions(args: args)
+        let lensDirection: LensDirection = cameraOptions.lensDirection
+        self.enableDistortionCorrection = cameraOptions.enableDistortionCorrection
         scannerController = ScannerController(lensDirection: lensDirection)
         onObjectDetectedChangedStreamHandler = ObjectDetectedChangedHandler(scannerController: scannerController!)
         super.init()
@@ -158,6 +161,12 @@ class FLNativeView: NSObject, FlutterPlatformView {
             lensDirection = .front
         }
         return lensDirection;
+    }
+
+    private static func parseCameraOptions(args: [String: Any]?) -> CameraOptions {
+        let lensDirection: LensDirection = FLNativeView.getLensDirection(args: args)
+        let enableDistortionCorrection: Bool = args!["enableDistortionCorrection"] as! Bool
+        return CameraOptions(lensDirection: lensDirection, enableDistortionCorrection: enableDistortionCorrection)
     }
 
     private func notifyAboutInitDone() {

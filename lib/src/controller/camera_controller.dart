@@ -51,4 +51,6 @@ abstract class CameraController {
   Future<void> stopObjectDetectionStream();
 
   Future<void> setLensDirection(LensDirection lensDirection);
+
+  bool get enableDistortionCorrection;
 }
