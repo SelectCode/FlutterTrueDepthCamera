@@ -71,7 +71,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
         let cameraOptions = FLNativeView.parseCameraOptions(args: args)
         let lensDirection: LensDirection = cameraOptions.lensDirection
         self.enableDistortionCorrection = cameraOptions.enableDistortionCorrection
-        scannerController = ScannerController(lensDirection: lensDirection)
+        scannerController = ScannerController(lensDirection: lensDirection,enableDistortionCorrection: cameraOptions.enableDistortionCorrection)
         onObjectDetectedChangedStreamHandler = ObjectDetectedChangedHandler(scannerController: scannerController!)
         super.init()
 
