@@ -7,8 +7,10 @@ export 'src/models/models.dart';
 export 'src/preview/camera_preview.dart';
 
 abstract class CvCamera {
-  static CameraController getCameraController({LensDirection? lensDirection}) =>
+  static CameraController getCameraController(
+          {LensDirection? lensDirection, bool? enableDistortionCorrection}) =>
       CvCameraPlatform.instance.getCameraController(
         lensDirection: lensDirection,
+        enableDistortionCorrection: enableDistortionCorrection,
       );
 }

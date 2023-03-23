@@ -25,5 +25,6 @@ abstract class CvCameraPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  CameraController getCameraController({LensDirection? lensDirection});
+  CameraController getCameraController(
+      {LensDirection? lensDirection, bool? enableDistortionCorrection});
 }

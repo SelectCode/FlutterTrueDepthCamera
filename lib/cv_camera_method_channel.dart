@@ -22,6 +22,7 @@ class MethodChannelCvCamera extends CvCameraPlatform {
   @override
   CameraController getCameraController({
     LensDirection? lensDirection,
+    bool? enableDistortionCorrection,
     Clock? clock,
   }) {
     return CameraControllerImpl(
@@ -30,6 +31,7 @@ class MethodChannelCvCamera extends CvCameraPlatform {
       eventChannel: eventChannel,
       objectDetectionEventChannel: objectDetectionEventChannel,
       clock: clock,
+      enableDistortionCorrection: enableDistortionCorrection ?? true,
     );
   }
 }
