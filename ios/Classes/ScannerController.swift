@@ -160,10 +160,10 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     /// Stops preview.
     func stop(_ callback: ((Error?) -> ())) {
         do {
-            self.previewLayer?.removeFromSuperlayer()
-            self.session.stopRunning()
+            previewLayer?.removeFromSuperlayer()
+            session.stopRunning()
 
-            self.previewLayer = nil
+            previewLayer = nil
             callback(nil)
         } catch let error {
             callback(error);
@@ -264,14 +264,15 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             }
 
 
-
             if (self.onObjectDetectedChanged != nil) {
                 self.objectDetectionQueue.async {
                     let width = CVPixelBufferGetWidth(videoPixelBuffer)
                     let height = CVPixelBufferGetHeight(videoPixelBuffer)
                     let hasDetected = self.checkForObject(depthValues: depthValues, width: width, height: height)
                     if (self.lastDetected != hasDetected) {
-                        self.onObjectDetectedChanged!(hasDetected)
+                        if (self.onObjectDetectedChanged != nil) {
+                            self.onObjectDetectedChanged!(hasDetected)
+                        }
                         self.lastDetected = hasDetected
                     }
                 }
@@ -365,7 +366,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
 
         var undistortedBuffer: CVPixelBuffer? = nil
-        if(enableDistortionCorrection) {
+        if (enableDistortionCorrection) {
             undistortedBuffer = undistortDepthValues(depthPixelBuffer: depthPixelBuffer, depthData: depthData, depthWidth: depthWidth, depthHeight: depthHeight)
         }
 
@@ -434,11 +435,11 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
                 let undistortedX = Int(undistortedPoint.x)
                 let undistortedY = Int(undistortedPoint.y)
                 let destinationOffset = undistortedY * bytesPerRow + undistortedX * MemoryLayout<UInt8>.stride
-                if(destinationOffset >= bytesPerRow * height) {
+                if (destinationOffset >= bytesPerRow * height) {
                     //todo: handle this
                     continue
                 }
-                if(destinationOffset != offset) {
+                if (destinationOffset != offset) {
                     changedPixelCount += 1
                 }
                 let destinationPointer = destination!.advanced(by: destinationOffset).assumingMemoryBound(to: UInt8.self)
