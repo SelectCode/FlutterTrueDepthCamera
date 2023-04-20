@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:cv_camera/cv_camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_extend/share_extend.dart';
 
 void main() {
   runApp(const MyApp());
@@ -26,7 +27,8 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _controller = CvCamera.getCameraController();
+    _controller =
+        CvCamera.getCameraController(enableDistortionCorrection: false);
     _shootEffectController = CameraShootEffectController();
     setUpStream();
   }
@@ -45,10 +47,19 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> copyFaceIdData(
-      FaceIdSensorData? faceIdSensorData, BuildContext context) async {
-    await Clipboard.setData(ClipboardData(
-      text: jsonEncode(faceIdSensorData?.toJson()),
-    ));
+      TakePictureResult result, BuildContext context) async {
+    // await Clipboard.setData(ClipboardData(
+    //   text: jsonEncode(faceIdSensorData?.toJson()),
+    // ));
+    print('writing to file');
+    final filepath = await writePlyFile(result.faceIdSensorData!);
+    final bytes = ImageBuilder.fromCameraImage(result.cameraImage).asJpg();
+    final imagePath = await writeImageFile(bytes);
+
+    await ShareExtend.shareMultiple([
+      filepath,
+      imagePath,
+    ], 'file');
     showCopiedToClipboardNotification(context);
   }
 
@@ -92,7 +103,7 @@ class _MyAppState extends State<MyApp> {
                       onPressed: () async {
                         _shootEffectController.play();
                         final result = await _controller.takePicture();
-                        await copyFaceIdData(result.faceIdSensorData, context);
+                        await copyFaceIdData(result, context);
                         var notZeroCount = 0;
                         var depthValues = result.faceIdSensorData!.depthValues;
                         for (var i = 0; i < depthValues.length; i++) {
@@ -122,7 +133,7 @@ class _MyAppState extends State<MyApp> {
                       icon: const Icon(Icons.face),
                       onPressed: () async {
                         final result = await _controller.getFaceIdSensorData();
-                        await copyFaceIdData(result, context);
+                        // await copyFaceIdData(result, context);
                       },
                     ),
                     IconButton(

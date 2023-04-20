@@ -12,6 +12,13 @@ class Float32ListConverter implements JsonConverter<Float32List, List> {
 
   @override
   List<double> toJson(Float32List object) {
-    return object.toList();
+    final list = object.toList();
+    // replace all nan values with -0
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].isNaN || list[i].isInfinite) {
+        list[i] = 0.0;
+      }
+    }
+    return list;
   }
 }

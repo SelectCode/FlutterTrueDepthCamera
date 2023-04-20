@@ -14,6 +14,13 @@ class Float64ListConverter implements JsonConverter<Float64List, List> {
 
   @override
   List<double> toJson(Float64List object) {
-    return object.toList();
+    final list = object.toList();
+    // replace all nan values with -0
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].isNaN || list[i].isInfinite) {
+        list[i] = 0.0;
+      }
+    }
+    return list;
   }
 }
