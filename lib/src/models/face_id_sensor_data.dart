@@ -60,6 +60,8 @@ Future<String> writePlyFile(FaceIdSensorData data) async {
       final point = Float64List.sublistView(points, i, i + 3);
       if (point.every((p) => p.isFinite)) {
         buffer.write('${point[0]} ${point[1]} ${point[2]}\n');
+      } else {
+        buffer.write('nan nan nan\n');
       }
 
       if (buffer.length > 1024 * 1024) {

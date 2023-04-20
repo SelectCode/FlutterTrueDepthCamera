@@ -46,11 +46,8 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
-  Future<void> copyFaceIdData(
+  Future<void> shareFaceIdData(
       TakePictureResult result, BuildContext context) async {
-    // await Clipboard.setData(ClipboardData(
-    //   text: jsonEncode(faceIdSensorData?.toJson()),
-    // ));
     print('writing to file');
     final filepath = await writePlyFile(result.faceIdSensorData!);
     final bytes = ImageBuilder.fromCameraImage(result.cameraImage).asJpg();
@@ -103,7 +100,7 @@ class _MyAppState extends State<MyApp> {
                       onPressed: () async {
                         _shootEffectController.play();
                         final result = await _controller.takePicture();
-                        await copyFaceIdData(result, context);
+                        await shareFaceIdData(result, context);
                         var notZeroCount = 0;
                         var depthValues = result.faceIdSensorData!.depthValues;
                         for (var i = 0; i < depthValues.length; i++) {
