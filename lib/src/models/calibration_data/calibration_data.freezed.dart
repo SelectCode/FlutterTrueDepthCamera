@@ -50,9 +50,6 @@ abstract class $CvCameraCalibrationDataCopyWith<$Res> {
       CGSize intrinsicMatrixReferenceDimensions,
       @Float64ListConverter() Float64List lensDistortionLookupTable,
       CGPoint lensDistortionCenter});
-
-  $CGSizeCopyWith<$Res> get intrinsicMatrixReferenceDimensions;
-  $CGPointCopyWith<$Res> get lensDistortionCenter;
 }
 
 /// @nodoc
@@ -72,9 +69,9 @@ class _$CvCameraCalibrationDataCopyWithImpl<$Res,
     Object? pixelSize = null,
     Object? intrinsicMatrix = null,
     Object? extrinsicMatrix = null,
-    Object? intrinsicMatrixReferenceDimensions = null,
+    Object? intrinsicMatrixReferenceDimensions = freezed,
     Object? lensDistortionLookupTable = null,
-    Object? lensDistortionCenter = null,
+    Object? lensDistortionCenter = freezed,
   }) {
     return _then(_value.copyWith(
       pixelSize: null == pixelSize
@@ -89,7 +86,7 @@ class _$CvCameraCalibrationDataCopyWithImpl<$Res,
           ? _value.extrinsicMatrix
           : extrinsicMatrix // ignore: cast_nullable_to_non_nullable
               as List<CGVector>,
-      intrinsicMatrixReferenceDimensions: null ==
+      intrinsicMatrixReferenceDimensions: freezed ==
               intrinsicMatrixReferenceDimensions
           ? _value.intrinsicMatrixReferenceDimensions
           : intrinsicMatrixReferenceDimensions // ignore: cast_nullable_to_non_nullable
@@ -98,29 +95,11 @@ class _$CvCameraCalibrationDataCopyWithImpl<$Res,
           ? _value.lensDistortionLookupTable
           : lensDistortionLookupTable // ignore: cast_nullable_to_non_nullable
               as Float64List,
-      lensDistortionCenter: null == lensDistortionCenter
+      lensDistortionCenter: freezed == lensDistortionCenter
           ? _value.lensDistortionCenter
           : lensDistortionCenter // ignore: cast_nullable_to_non_nullable
               as CGPoint,
     ) as $Val);
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $CGSizeCopyWith<$Res> get intrinsicMatrixReferenceDimensions {
-    return $CGSizeCopyWith<$Res>(_value.intrinsicMatrixReferenceDimensions,
-        (value) {
-      return _then(
-          _value.copyWith(intrinsicMatrixReferenceDimensions: value) as $Val);
-    });
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $CGPointCopyWith<$Res> get lensDistortionCenter {
-    return $CGPointCopyWith<$Res>(_value.lensDistortionCenter, (value) {
-      return _then(_value.copyWith(lensDistortionCenter: value) as $Val);
-    });
   }
 }
 
@@ -139,11 +118,6 @@ abstract class _$$_CvCameraCalibrationDataCopyWith<$Res>
       CGSize intrinsicMatrixReferenceDimensions,
       @Float64ListConverter() Float64List lensDistortionLookupTable,
       CGPoint lensDistortionCenter});
-
-  @override
-  $CGSizeCopyWith<$Res> get intrinsicMatrixReferenceDimensions;
-  @override
-  $CGPointCopyWith<$Res> get lensDistortionCenter;
 }
 
 /// @nodoc
@@ -161,9 +135,9 @@ class __$$_CvCameraCalibrationDataCopyWithImpl<$Res>
     Object? pixelSize = null,
     Object? intrinsicMatrix = null,
     Object? extrinsicMatrix = null,
-    Object? intrinsicMatrixReferenceDimensions = null,
+    Object? intrinsicMatrixReferenceDimensions = freezed,
     Object? lensDistortionLookupTable = null,
-    Object? lensDistortionCenter = null,
+    Object? lensDistortionCenter = freezed,
   }) {
     return _then(_$_CvCameraCalibrationData(
       pixelSize: null == pixelSize
@@ -178,7 +152,7 @@ class __$$_CvCameraCalibrationDataCopyWithImpl<$Res>
           ? _value._extrinsicMatrix
           : extrinsicMatrix // ignore: cast_nullable_to_non_nullable
               as List<CGVector>,
-      intrinsicMatrixReferenceDimensions: null ==
+      intrinsicMatrixReferenceDimensions: freezed ==
               intrinsicMatrixReferenceDimensions
           ? _value.intrinsicMatrixReferenceDimensions
           : intrinsicMatrixReferenceDimensions // ignore: cast_nullable_to_non_nullable
@@ -187,7 +161,7 @@ class __$$_CvCameraCalibrationDataCopyWithImpl<$Res>
           ? _value.lensDistortionLookupTable
           : lensDistortionLookupTable // ignore: cast_nullable_to_non_nullable
               as Float64List,
-      lensDistortionCenter: null == lensDistortionCenter
+      lensDistortionCenter: freezed == lensDistortionCenter
           ? _value.lensDistortionCenter
           : lensDistortionCenter // ignore: cast_nullable_to_non_nullable
               as CGPoint,
@@ -255,14 +229,13 @@ class _$_CvCameraCalibrationData extends _CvCameraCalibrationData {
                 .equals(other._intrinsicMatrix, _intrinsicMatrix) &&
             const DeepCollectionEquality()
                 .equals(other._extrinsicMatrix, _extrinsicMatrix) &&
-            (identical(other.intrinsicMatrixReferenceDimensions,
-                    intrinsicMatrixReferenceDimensions) ||
-                other.intrinsicMatrixReferenceDimensions ==
-                    intrinsicMatrixReferenceDimensions) &&
+            const DeepCollectionEquality().equals(
+                other.intrinsicMatrixReferenceDimensions,
+                intrinsicMatrixReferenceDimensions) &&
             const DeepCollectionEquality().equals(
                 other.lensDistortionLookupTable, lensDistortionLookupTable) &&
-            (identical(other.lensDistortionCenter, lensDistortionCenter) ||
-                other.lensDistortionCenter == lensDistortionCenter));
+            const DeepCollectionEquality()
+                .equals(other.lensDistortionCenter, lensDistortionCenter));
   }
 
   @JsonKey(ignore: true)
@@ -272,9 +245,9 @@ class _$_CvCameraCalibrationData extends _CvCameraCalibrationData {
       pixelSize,
       const DeepCollectionEquality().hash(_intrinsicMatrix),
       const DeepCollectionEquality().hash(_extrinsicMatrix),
-      intrinsicMatrixReferenceDimensions,
+      const DeepCollectionEquality().hash(intrinsicMatrixReferenceDimensions),
       const DeepCollectionEquality().hash(lensDistortionLookupTable),
-      lensDistortionCenter);
+      const DeepCollectionEquality().hash(lensDistortionCenter));
 
   @JsonKey(ignore: true)
   @override

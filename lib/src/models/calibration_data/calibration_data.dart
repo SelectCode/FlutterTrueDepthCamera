@@ -20,8 +20,6 @@ class CvCameraCalibrationData with _$CvCameraCalibrationData {
   factory CvCameraCalibrationData.fromJson(Map<String, dynamic> json) =>
       _$CvCameraCalibrationDataFromJson(json);
 
-  const CvCameraCalibrationData._();
-
   // ignore: invalid_annotation_target
   @JsonSerializable(explicitToJson: true, anyMap: true)
   const factory CvCameraCalibrationData({
@@ -32,6 +30,7 @@ class CvCameraCalibrationData with _$CvCameraCalibrationData {
     @Float64ListConverter() required Float64List lensDistortionLookupTable,
     required CGPoint lensDistortionCenter,
   }) = _CvCameraCalibrationData;
+  const CvCameraCalibrationData._();
 
   CameraIntrinsics toCameraIntrinsics() {
     return CameraIntrinsics.fromCalibrationData(this);
