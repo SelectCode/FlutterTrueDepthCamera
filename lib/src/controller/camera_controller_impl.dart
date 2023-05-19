@@ -130,10 +130,18 @@ class CameraControllerImpl implements CameraController {
 
   @override
   Future<TakePictureResult> takePicture({bool saveImage = false}) async {
+    final stopwatch = Stopwatch()..start();
     await readyCompleter.future;
-    final response = Map<String, dynamic>.from(
-        await methodChannel.invokeMethod("takePicture"));
-    if (!saveImage) return TakePictureResult.fromJson(response);
+    print("readyCompleter: ${stopwatch.elapsedMilliseconds}");
+    final data = await methodChannel.invokeMethod("takePicture");
+    print("takePicture: ${stopwatch.elapsedMilliseconds}");
+    final response = Map<String, dynamic>.from(data);
+    print("response: ${stopwatch.elapsedMilliseconds}");
+    if (!saveImage) {
+      final result = TakePictureResult.fromJson(response);
+      print("result: ${stopwatch.elapsedMilliseconds}");
+      return result;
+    }
     return await compute<PictureHandlerParams, TakePictureResult>(
       _savePictureHandler,
       PictureHandlerParams(
