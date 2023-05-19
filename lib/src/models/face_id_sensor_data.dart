@@ -70,13 +70,33 @@ class FaceIdSensorData with _$FaceIdSensorData {
 
   const FaceIdSensorData._();
 
+  /// Converts the FaceIdSensorData's xyz values to a DepthImage.
+  ///
+  /// [discardAbove] and [discardBelow] provide optional bounds to consider while calculating the depth values.
+  /// Any depth value above [discardAbove] or below [discardBelow] is ignored. If these parameters are null,
+  /// all depth values are considered.
+  ///
+  /// The method first finds the maximum and minimum depth (z) values within the valid range
+  /// (determined by [discardAbove] and [discardBelow]).
+  ///
+  /// Then, it normalizes the depth values to grayscale values between 0 and 255.
+  /// Depth values closer to the minimum depth value are assigned to black (0),
+  /// and depth values closer to the maximum depth value are assigned to white (255).
+  ///
+  /// The normalization formula used is ((z - minDepth) / (maxDepth - minDepth) * 255).
+  ///
+  /// Finally, the method creates and returns a DepthImage with the grayscale values, the width and height of the image,
+  /// and the maximum and minimum depth values encountered in the valid range.
+  ///
+  /// Note: This method assumes that the Float64List xyz is arranged in a manner consistent with
+  /// the image's width and height, where every 3 elements represent the x, y and z coordinates of a point.
   DepthImage toDepthImage({double? discardAbove, double? discardBelow}) {
     double maxDepth = double.negativeInfinity;
     double minDepth = double.infinity;
 
-    // Find min and max depth values within valid range
-    for (int i = 0; i < depthValues.length; i++) {
-      double z = depthValues[i];
+    // Find min and max depth (z) values within valid range
+    for (int i = 0; i < xyz.length; i += 3) {
+      double z = xyz[i + 2]; // Z value is the third element in the xyz set
       if ((discardBelow == null || z >= discardBelow) &&
           (discardAbove == null || z <= discardAbove)) {
         maxDepth = math.max(maxDepth, z);
@@ -84,13 +104,14 @@ class FaceIdSensorData with _$FaceIdSensorData {
       }
     }
 
-    // Normalize depthValues between 0 and 255
-    final normalizedDepthValues = Uint8List(depthValues.length);
-    for (int i = 0; i < depthValues.length; i++) {
-      double z = depthValues[i];
+    // Normalize depth (z) values between 0 and 255
+    final normalizedDepthValues =
+        Uint8List(xyz.length ~/ 3); // Assuming xyz length is a multiple of 3
+    for (int i = 0; i < xyz.length; i += 3) {
+      double z = xyz[i + 2];
       if (z >= minDepth && z <= maxDepth) {
         // Convert z value to 0-255 grayscale value
-        normalizedDepthValues[i] =
+        normalizedDepthValues[i ~/ 3] =
             ((z - minDepth) / (maxDepth - minDepth) * 255).round();
       }
     }
