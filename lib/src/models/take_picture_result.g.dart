@@ -13,7 +13,7 @@ _$_TakePictureResult _$$_TakePictureResultFromJson(Map<String, dynamic> json) =>
           : FaceIdSensorData.fromJson(
               json['depthData'] as Map<String, dynamic>),
       cameraImage: CameraImage.fromJson(json['image'] as Map<String, dynamic>),
-      path: json['path'] as String,
+      path: json['path'] as String?,
     );
 
 Map<String, dynamic> _$$_TakePictureResultToJson(
