@@ -13,7 +13,7 @@ class TakePictureResult with _$TakePictureResult {
     /// Is `null` when CameraDirection is not front
     @JsonKey(name: "depthData") required FaceIdSensorData? faceIdSensorData,
     @JsonKey(name: "image") required CameraImage cameraImage,
-    required String path,
+    required String? path,
   }) = _TakePictureResult;
 
   factory TakePictureResult.fromJson(Map<String, dynamic> json) =>
