@@ -1,19 +1,55 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:cv_camera/cv_camera.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:image/image.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:ui' as ui;
+
 import '../utils/converters/float32_list_converter.dart';
 import '../utils/converters/float64_list_converter.dart';
 import '../utils/converters/uint8_list_converter.dart';
-import 'dart:math' as math;
+
 part 'face_id_sensor_data.freezed.dart';
 
 part 'face_id_sensor_data.g.dart';
+
+/// CameraIntrinsics is a class representing the intrinsic parameters of a camera.
+/// These are parameters that are inherent to the camera itself and are related to
+/// the camera's build and the lens. They don't change if the scene or camera's pose changes.
+///
+/// `intrinsicsFx` and `intrinsicsFy` are the focal lengths of the camera lens in terms of pixels.
+/// They express how strongly the camera lens converges or diverges the light onto the camera's sensor.
+///
+/// `intrinsicsCx` and `intrinsicsCy` are the coordinates of the principal point (usually the image center).
+/// These are the pixel coordinates where the camera's optical axis intersects the image plane.
+@freezed
+class CameraIntrinsics with _$CameraIntrinsics {
+  /// Create a new instance of CameraIntrinsics with given parameters
+  const factory CameraIntrinsics({
+    required double intrinsicsFx,
+    required double intrinsicsFy,
+    required double intrinsicsCx,
+    required double intrinsicsCy,
+  }) = _CameraIntrinsics;
+
+  /// Create a new instance of CameraIntrinsics from a JSON object
+  factory CameraIntrinsics.fromJson(Map<String, dynamic> json) =>
+      _$CameraIntrinsicsFromJson(json);
+
+  /// Create a new instance of CameraIntrinsics from a CvCameraCalibrationData object.
+  /// The intrinsic parameters are extracted from the intrinsicMatrix of the CvCameraCalibrationData object.
+  factory CameraIntrinsics.fromCalibrationData(CvCameraCalibrationData data) {
+    return CameraIntrinsics(
+      intrinsicsFx: data.intrinsicMatrix[0].x,
+      intrinsicsFy: data.intrinsicMatrix[1].y,
+      intrinsicsCx: data.intrinsicMatrix[2].x,
+      intrinsicsCy: data.intrinsicMatrix[2].y,
+    );
+  }
+}
 
 @freezed
 class DepthImage with _$DepthImage {

@@ -14,6 +14,211 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
+CameraIntrinsics _$CameraIntrinsicsFromJson(Map<String, dynamic> json) {
+  return _CameraIntrinsics.fromJson(json);
+}
+
+/// @nodoc
+mixin _$CameraIntrinsics {
+  double get intrinsicsFx => throw _privateConstructorUsedError;
+  double get intrinsicsFy => throw _privateConstructorUsedError;
+  double get intrinsicsCx => throw _privateConstructorUsedError;
+  double get intrinsicsCy => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $CameraIntrinsicsCopyWith<CameraIntrinsics> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $CameraIntrinsicsCopyWith<$Res> {
+  factory $CameraIntrinsicsCopyWith(
+          CameraIntrinsics value, $Res Function(CameraIntrinsics) then) =
+      _$CameraIntrinsicsCopyWithImpl<$Res, CameraIntrinsics>;
+  @useResult
+  $Res call(
+      {double intrinsicsFx,
+      double intrinsicsFy,
+      double intrinsicsCx,
+      double intrinsicsCy});
+}
+
+/// @nodoc
+class _$CameraIntrinsicsCopyWithImpl<$Res, $Val extends CameraIntrinsics>
+    implements $CameraIntrinsicsCopyWith<$Res> {
+  _$CameraIntrinsicsCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? intrinsicsFx = null,
+    Object? intrinsicsFy = null,
+    Object? intrinsicsCx = null,
+    Object? intrinsicsCy = null,
+  }) {
+    return _then(_value.copyWith(
+      intrinsicsFx: null == intrinsicsFx
+          ? _value.intrinsicsFx
+          : intrinsicsFx // ignore: cast_nullable_to_non_nullable
+              as double,
+      intrinsicsFy: null == intrinsicsFy
+          ? _value.intrinsicsFy
+          : intrinsicsFy // ignore: cast_nullable_to_non_nullable
+              as double,
+      intrinsicsCx: null == intrinsicsCx
+          ? _value.intrinsicsCx
+          : intrinsicsCx // ignore: cast_nullable_to_non_nullable
+              as double,
+      intrinsicsCy: null == intrinsicsCy
+          ? _value.intrinsicsCy
+          : intrinsicsCy // ignore: cast_nullable_to_non_nullable
+              as double,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$_CameraIntrinsicsCopyWith<$Res>
+    implements $CameraIntrinsicsCopyWith<$Res> {
+  factory _$$_CameraIntrinsicsCopyWith(
+          _$_CameraIntrinsics value, $Res Function(_$_CameraIntrinsics) then) =
+      __$$_CameraIntrinsicsCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {double intrinsicsFx,
+      double intrinsicsFy,
+      double intrinsicsCx,
+      double intrinsicsCy});
+}
+
+/// @nodoc
+class __$$_CameraIntrinsicsCopyWithImpl<$Res>
+    extends _$CameraIntrinsicsCopyWithImpl<$Res, _$_CameraIntrinsics>
+    implements _$$_CameraIntrinsicsCopyWith<$Res> {
+  __$$_CameraIntrinsicsCopyWithImpl(
+      _$_CameraIntrinsics _value, $Res Function(_$_CameraIntrinsics) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? intrinsicsFx = null,
+    Object? intrinsicsFy = null,
+    Object? intrinsicsCx = null,
+    Object? intrinsicsCy = null,
+  }) {
+    return _then(_$_CameraIntrinsics(
+      intrinsicsFx: null == intrinsicsFx
+          ? _value.intrinsicsFx
+          : intrinsicsFx // ignore: cast_nullable_to_non_nullable
+              as double,
+      intrinsicsFy: null == intrinsicsFy
+          ? _value.intrinsicsFy
+          : intrinsicsFy // ignore: cast_nullable_to_non_nullable
+              as double,
+      intrinsicsCx: null == intrinsicsCx
+          ? _value.intrinsicsCx
+          : intrinsicsCx // ignore: cast_nullable_to_non_nullable
+              as double,
+      intrinsicsCy: null == intrinsicsCy
+          ? _value.intrinsicsCy
+          : intrinsicsCy // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$_CameraIntrinsics implements _CameraIntrinsics {
+  const _$_CameraIntrinsics(
+      {required this.intrinsicsFx,
+      required this.intrinsicsFy,
+      required this.intrinsicsCx,
+      required this.intrinsicsCy});
+
+  factory _$_CameraIntrinsics.fromJson(Map<String, dynamic> json) =>
+      _$$_CameraIntrinsicsFromJson(json);
+
+  @override
+  final double intrinsicsFx;
+  @override
+  final double intrinsicsFy;
+  @override
+  final double intrinsicsCx;
+  @override
+  final double intrinsicsCy;
+
+  @override
+  String toString() {
+    return 'CameraIntrinsics(intrinsicsFx: $intrinsicsFx, intrinsicsFy: $intrinsicsFy, intrinsicsCx: $intrinsicsCx, intrinsicsCy: $intrinsicsCy)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$_CameraIntrinsics &&
+            (identical(other.intrinsicsFx, intrinsicsFx) ||
+                other.intrinsicsFx == intrinsicsFx) &&
+            (identical(other.intrinsicsFy, intrinsicsFy) ||
+                other.intrinsicsFy == intrinsicsFy) &&
+            (identical(other.intrinsicsCx, intrinsicsCx) ||
+                other.intrinsicsCx == intrinsicsCx) &&
+            (identical(other.intrinsicsCy, intrinsicsCy) ||
+                other.intrinsicsCy == intrinsicsCy));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, intrinsicsFx, intrinsicsFy, intrinsicsCx, intrinsicsCy);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$_CameraIntrinsicsCopyWith<_$_CameraIntrinsics> get copyWith =>
+      __$$_CameraIntrinsicsCopyWithImpl<_$_CameraIntrinsics>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$_CameraIntrinsicsToJson(
+      this,
+    );
+  }
+}
+
+abstract class _CameraIntrinsics implements CameraIntrinsics {
+  const factory _CameraIntrinsics(
+      {required final double intrinsicsFx,
+      required final double intrinsicsFy,
+      required final double intrinsicsCx,
+      required final double intrinsicsCy}) = _$_CameraIntrinsics;
+
+  factory _CameraIntrinsics.fromJson(Map<String, dynamic> json) =
+      _$_CameraIntrinsics.fromJson;
+
+  @override
+  double get intrinsicsFx;
+  @override
+  double get intrinsicsFy;
+  @override
+  double get intrinsicsCx;
+  @override
+  double get intrinsicsCy;
+  @override
+  @JsonKey(ignore: true)
+  _$$_CameraIntrinsicsCopyWith<_$_CameraIntrinsics> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 /// @nodoc
 mixin _$DepthImage {
   double get maxDepth => throw _privateConstructorUsedError;

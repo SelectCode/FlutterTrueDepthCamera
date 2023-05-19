@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:cv_camera/cv_camera.dart';
 import 'package:cv_camera/src/utils/converters/float64_list_converter.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -29,4 +30,8 @@ class CvCameraCalibrationData with _$CvCameraCalibrationData {
     @Float64ListConverter() required Float64List lensDistortionLookupTable,
     required CGPoint lensDistortionCenter,
   }) = _CvCameraCalibrationData;
+
+  CameraIntrinsics toCameraIntrinsics() {
+    return CameraIntrinsics.fromCalibrationData(this);
+  }
 }
