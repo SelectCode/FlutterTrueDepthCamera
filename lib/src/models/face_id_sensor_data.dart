@@ -90,7 +90,7 @@ class DepthImage with _$DepthImage {
   /// function, then encodes this image into a JPEG format.
   ///
   /// Returns a [Uint8List] containing the bytes of the JPEG image.
-  Uint8List depthToJpegBytes() {
+  Uint8List toJpegBytes() {
     img.Image grayscaleImage = toGrayscaleImage();
     Uint8List jpegBytes = img.encodeJpg(grayscaleImage);
     return jpegBytes;
