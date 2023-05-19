@@ -35,10 +35,6 @@ class CameraIntrinsics with _$CameraIntrinsics {
     required double intrinsicsCy,
   }) = _CameraIntrinsics;
 
-  /// Create a new instance of CameraIntrinsics from a JSON object
-  factory CameraIntrinsics.fromJson(Map<String, dynamic> json) =>
-      _$CameraIntrinsicsFromJson(json);
-
   /// Create a new instance of CameraIntrinsics from a CvCameraCalibrationData object.
   /// The intrinsic parameters are extracted from the intrinsicMatrix of the CvCameraCalibrationData object.
   factory CameraIntrinsics.fromCalibrationData(CvCameraCalibrationData data) {
