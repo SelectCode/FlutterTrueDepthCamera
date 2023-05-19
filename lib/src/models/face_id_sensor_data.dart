@@ -62,22 +62,19 @@ class DepthImage with _$DepthImage {
 
   /// Converts a [DepthImage] into a grayscale image.
   ///
-  /// This function takes a [DepthImage] as input and converts it into a grayscale image using the `image` package.
+  /// This function converts the [DepthImage] into a grayscale image.
   /// Each pixel's red, green, and blue values are set to the corresponding grayscale value from the [DepthImage],
   /// creating a grayscale image where pixel intensity corresponds to depth.
   ///
-  /// [depthImage]: The [DepthImage] object to convert.
-  ///
   /// Returns a grayscale [img.Image].
-  img.Image depthToGrayscaleImage(DepthImage depthImage) {
-    img.Image grayscaleImage =
-        img.Image(width: depthImage.width, height: depthImage.height);
+  img.Image toGrayscaleImage() {
+    img.Image grayscaleImage = img.Image(width: width, height: height);
 
-    for (int i = 0; i < depthImage.bytes.length; i++) {
-      int grayscaleValue = depthImage.bytes[i];
+    for (int i = 0; i < bytes.length; i++) {
+      int grayscaleValue = bytes[i];
       grayscaleImage.data!.setPixelRgb(
-        i % depthImage.width,
-        i ~/ depthImage.width,
+        i % width,
+        i ~/ width,
         grayscaleValue,
         grayscaleValue,
         grayscaleValue,
@@ -87,16 +84,14 @@ class DepthImage with _$DepthImage {
     return grayscaleImage;
   }
 
-  /// Converts a [DepthImage] into JPEG bytes.
+  /// Converts the [DepthImage] into JPEG bytes.
   ///
-  /// This function first converts the [DepthImage] into a grayscale [img.Image] using the [depthToGrayscaleImage]
+  /// This function first converts the [DepthImage] into a grayscale [img.Image] using the [toGrayscaleImage]
   /// function, then encodes this image into a JPEG format.
   ///
-  /// [depthImage]: The [DepthImage] object to convert.
-  ///
   /// Returns a [Uint8List] containing the bytes of the JPEG image.
-  Uint8List depthToJpegBytes(DepthImage depthImage) {
-    img.Image grayscaleImage = depthToGrayscaleImage(depthImage);
+  Uint8List depthToJpegBytes() {
+    img.Image grayscaleImage = toGrayscaleImage();
     Uint8List jpegBytes = img.encodeJpg(grayscaleImage);
     return jpegBytes;
   }
