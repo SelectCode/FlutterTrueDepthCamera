@@ -25,6 +25,7 @@ mixin _$TakePictureResult {
   FaceIdSensorData? get faceIdSensorData => throw _privateConstructorUsedError;
   @JsonKey(name: "image")
   CameraImage get cameraImage => throw _privateConstructorUsedError;
+  @JsonKey(required: false)
   String? get path => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -42,7 +43,7 @@ abstract class $TakePictureResultCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: "depthData") FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image") CameraImage cameraImage,
-      String? path});
+      @JsonKey(required: false) String? path});
 
   $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData;
   $CameraImageCopyWith<$Res> get cameraImage;
@@ -113,7 +114,7 @@ abstract class _$$_TakePictureResultCopyWith<$Res>
   $Res call(
       {@JsonKey(name: "depthData") FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image") CameraImage cameraImage,
-      String? path});
+      @JsonKey(required: false) String? path});
 
   @override
   $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData;
@@ -159,7 +160,7 @@ class _$_TakePictureResult implements _TakePictureResult {
   const _$_TakePictureResult(
       {@JsonKey(name: "depthData") required this.faceIdSensorData,
       @JsonKey(name: "image") required this.cameraImage,
-      required this.path});
+      @JsonKey(required: false) required this.path});
 
   factory _$_TakePictureResult.fromJson(Map<String, dynamic> json) =>
       _$$_TakePictureResultFromJson(json);
@@ -172,6 +173,7 @@ class _$_TakePictureResult implements _TakePictureResult {
   @JsonKey(name: "image")
   final CameraImage cameraImage;
   @override
+  @JsonKey(required: false)
   final String? path;
 
   @override
@@ -217,7 +219,8 @@ abstract class _TakePictureResult implements TakePictureResult {
           required final FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image")
           required final CameraImage cameraImage,
-      required final String? path}) = _$_TakePictureResult;
+      @JsonKey(required: false)
+          required final String? path}) = _$_TakePictureResult;
 
   factory _TakePictureResult.fromJson(Map<String, dynamic> json) =
       _$_TakePictureResult.fromJson;
@@ -231,6 +234,7 @@ abstract class _TakePictureResult implements TakePictureResult {
   @JsonKey(name: "image")
   CameraImage get cameraImage;
   @override
+  @JsonKey(required: false)
   String? get path;
   @override
   @JsonKey(ignore: true)
