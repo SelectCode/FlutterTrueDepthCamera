@@ -331,13 +331,14 @@ class __$$_DepthImageCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_DepthImage implements _DepthImage {
+class _$_DepthImage extends _DepthImage {
   const _$_DepthImage(
       {required this.maxDepth,
       required this.minDepth,
       required this.width,
       required this.height,
-      required this.bytes});
+      required this.bytes})
+      : super._();
 
   @override
   final double maxDepth;
@@ -380,13 +381,14 @@ class _$_DepthImage implements _DepthImage {
       __$$_DepthImageCopyWithImpl<_$_DepthImage>(this, _$identity);
 }
 
-abstract class _DepthImage implements DepthImage {
+abstract class _DepthImage extends DepthImage {
   const factory _DepthImage(
       {required final double maxDepth,
       required final double minDepth,
       required final int width,
       required final int height,
       required final Uint8List bytes}) = _$_DepthImage;
+  const _DepthImage._() : super._();
 
   @override
   double get maxDepth;

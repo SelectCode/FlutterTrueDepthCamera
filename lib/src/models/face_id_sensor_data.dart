@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:cv_camera/cv_camera.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:image/image.dart' as img;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -56,6 +57,49 @@ class DepthImage with _$DepthImage {
     required int height,
     required Uint8List bytes,
   }) = _DepthImage;
+
+  const DepthImage._();
+
+  /// Converts a [DepthImage] into a grayscale image.
+  ///
+  /// This function takes a [DepthImage] as input and converts it into a grayscale image using the `image` package.
+  /// Each pixel's red, green, and blue values are set to the corresponding grayscale value from the [DepthImage],
+  /// creating a grayscale image where pixel intensity corresponds to depth.
+  ///
+  /// [depthImage]: The [DepthImage] object to convert.
+  ///
+  /// Returns a grayscale [img.Image].
+  img.Image depthToGrayscaleImage(DepthImage depthImage) {
+    img.Image grayscaleImage =
+        img.Image(width: depthImage.width, height: depthImage.height);
+
+    for (int i = 0; i < depthImage.bytes.length; i++) {
+      int grayscaleValue = depthImage.bytes[i];
+      grayscaleImage.data!.setPixelRgb(
+        i % depthImage.width,
+        i ~/ depthImage.width,
+        grayscaleValue,
+        grayscaleValue,
+        grayscaleValue,
+      );
+    }
+
+    return grayscaleImage;
+  }
+
+  /// Converts a [DepthImage] into JPEG bytes.
+  ///
+  /// This function first converts the [DepthImage] into a grayscale [img.Image] using the [depthToGrayscaleImage]
+  /// function, then encodes this image into a JPEG format.
+  ///
+  /// [depthImage]: The [DepthImage] object to convert.
+  ///
+  /// Returns a [Uint8List] containing the bytes of the JPEG image.
+  Uint8List depthToJpegBytes(DepthImage depthImage) {
+    img.Image grayscaleImage = depthToGrayscaleImage(depthImage);
+    Uint8List jpegBytes = img.encodeJpg(grayscaleImage);
+    return jpegBytes;
+  }
 }
 
 @freezed
