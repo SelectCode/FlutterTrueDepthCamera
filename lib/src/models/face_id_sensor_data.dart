@@ -10,10 +10,21 @@ import 'dart:ui' as ui;
 import '../utils/converters/float32_list_converter.dart';
 import '../utils/converters/float64_list_converter.dart';
 import '../utils/converters/uint8_list_converter.dart';
-
+import 'dart:math' as math;
 part 'face_id_sensor_data.freezed.dart';
 
 part 'face_id_sensor_data.g.dart';
+
+@freezed
+class DepthImage with _$DepthImage {
+  const factory DepthImage({
+    required double maxDepth,
+    required double minDepth,
+    required int width,
+    required int height,
+    required Uint8List bytes,
+  }) = _DepthImage;
+}
 
 @freezed
 class FaceIdSensorData with _$FaceIdSensorData {
@@ -24,6 +35,40 @@ class FaceIdSensorData with _$FaceIdSensorData {
     required int width,
     required int height,
   }) = _FaceIdSensorData;
+
+  DepthImage toDepthImage({double? discardAbove, double? discardBelow}) {
+    double maxDepth = double.negativeInfinity;
+    double minDepth = double.infinity;
+
+    // Find min and max depth values within valid range
+    for (int i = 0; i < depthValues.length; i++) {
+      double z = depthValues[i];
+      if ((discardBelow == null || z >= discardBelow) &&
+          (discardAbove == null || z <= discardAbove)) {
+        maxDepth = math.max(maxDepth, z);
+        minDepth = math.min(minDepth, z);
+      }
+    }
+
+    // Normalize depthValues between 0 and 255
+    final normalizedDepthValues = Uint8List(depthValues.length);
+    for (int i = 0; i < depthValues.length; i++) {
+      double z = depthValues[i];
+      if (z >= minDepth && z <= maxDepth) {
+        // Convert z value to 0-255 grayscale value
+        normalizedDepthValues[i] =
+            ((z - minDepth) / (maxDepth - minDepth) * 255).round();
+      }
+    }
+
+    return DepthImage(
+      maxDepth: maxDepth,
+      minDepth: minDepth,
+      width: width,
+      height: height,
+      bytes: normalizedDepthValues,
+    );
+  }
 
   factory FaceIdSensorData.fromJson(Map<String, dynamic> json) =>
       _$FaceIdSensorDataFromJson(json);

@@ -14,6 +14,210 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
+/// @nodoc
+mixin _$DepthImage {
+  double get maxDepth => throw _privateConstructorUsedError;
+  double get minDepth => throw _privateConstructorUsedError;
+  int get width => throw _privateConstructorUsedError;
+  int get height => throw _privateConstructorUsedError;
+  Uint8List get bytes => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $DepthImageCopyWith<DepthImage> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $DepthImageCopyWith<$Res> {
+  factory $DepthImageCopyWith(
+          DepthImage value, $Res Function(DepthImage) then) =
+      _$DepthImageCopyWithImpl<$Res, DepthImage>;
+  @useResult
+  $Res call(
+      {double maxDepth,
+      double minDepth,
+      int width,
+      int height,
+      Uint8List bytes});
+}
+
+/// @nodoc
+class _$DepthImageCopyWithImpl<$Res, $Val extends DepthImage>
+    implements $DepthImageCopyWith<$Res> {
+  _$DepthImageCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? maxDepth = null,
+    Object? minDepth = null,
+    Object? width = null,
+    Object? height = null,
+    Object? bytes = null,
+  }) {
+    return _then(_value.copyWith(
+      maxDepth: null == maxDepth
+          ? _value.maxDepth
+          : maxDepth // ignore: cast_nullable_to_non_nullable
+              as double,
+      minDepth: null == minDepth
+          ? _value.minDepth
+          : minDepth // ignore: cast_nullable_to_non_nullable
+              as double,
+      width: null == width
+          ? _value.width
+          : width // ignore: cast_nullable_to_non_nullable
+              as int,
+      height: null == height
+          ? _value.height
+          : height // ignore: cast_nullable_to_non_nullable
+              as int,
+      bytes: null == bytes
+          ? _value.bytes
+          : bytes // ignore: cast_nullable_to_non_nullable
+              as Uint8List,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$_DepthImageCopyWith<$Res>
+    implements $DepthImageCopyWith<$Res> {
+  factory _$$_DepthImageCopyWith(
+          _$_DepthImage value, $Res Function(_$_DepthImage) then) =
+      __$$_DepthImageCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {double maxDepth,
+      double minDepth,
+      int width,
+      int height,
+      Uint8List bytes});
+}
+
+/// @nodoc
+class __$$_DepthImageCopyWithImpl<$Res>
+    extends _$DepthImageCopyWithImpl<$Res, _$_DepthImage>
+    implements _$$_DepthImageCopyWith<$Res> {
+  __$$_DepthImageCopyWithImpl(
+      _$_DepthImage _value, $Res Function(_$_DepthImage) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? maxDepth = null,
+    Object? minDepth = null,
+    Object? width = null,
+    Object? height = null,
+    Object? bytes = null,
+  }) {
+    return _then(_$_DepthImage(
+      maxDepth: null == maxDepth
+          ? _value.maxDepth
+          : maxDepth // ignore: cast_nullable_to_non_nullable
+              as double,
+      minDepth: null == minDepth
+          ? _value.minDepth
+          : minDepth // ignore: cast_nullable_to_non_nullable
+              as double,
+      width: null == width
+          ? _value.width
+          : width // ignore: cast_nullable_to_non_nullable
+              as int,
+      height: null == height
+          ? _value.height
+          : height // ignore: cast_nullable_to_non_nullable
+              as int,
+      bytes: null == bytes
+          ? _value.bytes
+          : bytes // ignore: cast_nullable_to_non_nullable
+              as Uint8List,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$_DepthImage implements _DepthImage {
+  const _$_DepthImage(
+      {required this.maxDepth,
+      required this.minDepth,
+      required this.width,
+      required this.height,
+      required this.bytes});
+
+  @override
+  final double maxDepth;
+  @override
+  final double minDepth;
+  @override
+  final int width;
+  @override
+  final int height;
+  @override
+  final Uint8List bytes;
+
+  @override
+  String toString() {
+    return 'DepthImage(maxDepth: $maxDepth, minDepth: $minDepth, width: $width, height: $height, bytes: $bytes)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$_DepthImage &&
+            (identical(other.maxDepth, maxDepth) ||
+                other.maxDepth == maxDepth) &&
+            (identical(other.minDepth, minDepth) ||
+                other.minDepth == minDepth) &&
+            (identical(other.width, width) || other.width == width) &&
+            (identical(other.height, height) || other.height == height) &&
+            const DeepCollectionEquality().equals(other.bytes, bytes));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, maxDepth, minDepth, width,
+      height, const DeepCollectionEquality().hash(bytes));
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$_DepthImageCopyWith<_$_DepthImage> get copyWith =>
+      __$$_DepthImageCopyWithImpl<_$_DepthImage>(this, _$identity);
+}
+
+abstract class _DepthImage implements DepthImage {
+  const factory _DepthImage(
+      {required final double maxDepth,
+      required final double minDepth,
+      required final int width,
+      required final int height,
+      required final Uint8List bytes}) = _$_DepthImage;
+
+  @override
+  double get maxDepth;
+  @override
+  double get minDepth;
+  @override
+  int get width;
+  @override
+  int get height;
+  @override
+  Uint8List get bytes;
+  @override
+  @JsonKey(ignore: true)
+  _$$_DepthImageCopyWith<_$_DepthImage> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 FaceIdSensorData _$FaceIdSensorDataFromJson(Map<String, dynamic> json) {
   return _FaceIdSensorData.fromJson(json);
 }
