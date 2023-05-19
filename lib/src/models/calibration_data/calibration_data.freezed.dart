@@ -198,7 +198,7 @@ class __$$_CvCameraCalibrationDataCopyWithImpl<$Res>
 /// @nodoc
 
 @JsonSerializable(explicitToJson: true, anyMap: true)
-class _$_CvCameraCalibrationData implements _CvCameraCalibrationData {
+class _$_CvCameraCalibrationData extends _CvCameraCalibrationData {
   const _$_CvCameraCalibrationData(
       {required this.pixelSize,
       required final List<CGVector> intrinsicMatrix,
@@ -207,7 +207,8 @@ class _$_CvCameraCalibrationData implements _CvCameraCalibrationData {
       @Float64ListConverter() required this.lensDistortionLookupTable,
       required this.lensDistortionCenter})
       : _intrinsicMatrix = intrinsicMatrix,
-        _extrinsicMatrix = extrinsicMatrix;
+        _extrinsicMatrix = extrinsicMatrix,
+        super._();
 
   factory _$_CvCameraCalibrationData.fromJson(Map<String, dynamic> json) =>
       _$$_CvCameraCalibrationDataFromJson(json);
@@ -291,7 +292,7 @@ class _$_CvCameraCalibrationData implements _CvCameraCalibrationData {
   }
 }
 
-abstract class _CvCameraCalibrationData implements CvCameraCalibrationData {
+abstract class _CvCameraCalibrationData extends CvCameraCalibrationData {
   const factory _CvCameraCalibrationData(
           {required final double pixelSize,
           required final List<CGVector> intrinsicMatrix,
@@ -301,6 +302,7 @@ abstract class _CvCameraCalibrationData implements CvCameraCalibrationData {
               required final Float64List lensDistortionLookupTable,
           required final CGPoint lensDistortionCenter}) =
       _$_CvCameraCalibrationData;
+  const _CvCameraCalibrationData._() : super._();
 
   factory _CvCameraCalibrationData.fromJson(Map<String, dynamic> json) =
       _$_CvCameraCalibrationData.fromJson;
