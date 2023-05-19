@@ -160,7 +160,7 @@ class _$_TakePictureResult implements _TakePictureResult {
   const _$_TakePictureResult(
       {@JsonKey(name: "depthData") required this.faceIdSensorData,
       @JsonKey(name: "image") required this.cameraImage,
-      @JsonKey(required: false) required this.path});
+      @JsonKey(required: false) this.path});
 
   factory _$_TakePictureResult.fromJson(Map<String, dynamic> json) =>
       _$$_TakePictureResultFromJson(json);
@@ -220,7 +220,7 @@ abstract class _TakePictureResult implements TakePictureResult {
       @JsonKey(name: "image")
           required final CameraImage cameraImage,
       @JsonKey(required: false)
-          required final String? path}) = _$_TakePictureResult;
+          final String? path}) = _$_TakePictureResult;
 
   factory _TakePictureResult.fromJson(Map<String, dynamic> json) =
       _$_TakePictureResult.fromJson;
