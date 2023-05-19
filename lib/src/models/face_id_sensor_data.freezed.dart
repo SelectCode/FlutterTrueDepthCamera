@@ -562,13 +562,14 @@ class __$$_FaceIdSensorDataCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_FaceIdSensorData implements _FaceIdSensorData {
+class _$_FaceIdSensorData extends _FaceIdSensorData {
   const _$_FaceIdSensorData(
       {@Uint8ListConverter() required this.rgb,
       @Float64ListConverter() required this.xyz,
       @Float32ListConverter() required this.depthValues,
       required this.width,
-      required this.height});
+      required this.height})
+      : super._();
 
   factory _$_FaceIdSensorData.fromJson(Map<String, dynamic> json) =>
       _$$_FaceIdSensorDataFromJson(json);
@@ -629,13 +630,14 @@ class _$_FaceIdSensorData implements _FaceIdSensorData {
   }
 }
 
-abstract class _FaceIdSensorData implements FaceIdSensorData {
+abstract class _FaceIdSensorData extends FaceIdSensorData {
   const factory _FaceIdSensorData(
       {@Uint8ListConverter() required final Uint8List rgb,
       @Float64ListConverter() required final Float64List xyz,
       @Float32ListConverter() required final Float32List depthValues,
       required final int width,
       required final int height}) = _$_FaceIdSensorData;
+  const _FaceIdSensorData._() : super._();
 
   factory _FaceIdSensorData.fromJson(Map<String, dynamic> json) =
       _$_FaceIdSensorData.fromJson;

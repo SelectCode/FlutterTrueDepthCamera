@@ -72,6 +72,8 @@ class FaceIdSensorData with _$FaceIdSensorData {
     required int height,
   }) = _FaceIdSensorData;
 
+  const FaceIdSensorData._();
+
   DepthImage toDepthImage({double? discardAbove, double? discardBelow}) {
     double maxDepth = double.negativeInfinity;
     double minDepth = double.infinity;
