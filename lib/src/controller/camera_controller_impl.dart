@@ -104,7 +104,6 @@ class CameraControllerImpl implements CameraController {
   static Future<TakePictureResult> _savePictureHandler(
       PictureHandlerParams params) async {
     final response = params.response;
-    if (!params.saveImage) return TakePictureResult.fromJson(response);
     final temporaryDirPath = params.temporaryDirectoryPath;
     final clock = params.clock;
 
@@ -134,13 +133,13 @@ class CameraControllerImpl implements CameraController {
     await readyCompleter.future;
     final response = Map<String, dynamic>.from(
         await methodChannel.invokeMethod("takePicture"));
+    if (!saveImage) return TakePictureResult.fromJson(response);
     return await compute<PictureHandlerParams, TakePictureResult>(
       _savePictureHandler,
       PictureHandlerParams(
         response: response,
         temporaryDirectoryPath: (await getTemporaryDirectory()).path,
         clock: clock,
-        saveImage: saveImage,
       ),
     );
   }
@@ -230,12 +229,10 @@ class PictureHandlerParams {
   final Map<String, dynamic> response;
   final String temporaryDirectoryPath;
   final Clock clock;
-  final bool saveImage;
 
   const PictureHandlerParams({
     required this.response,
     required this.temporaryDirectoryPath,
     required this.clock,
-    required this.saveImage,
   });
 }

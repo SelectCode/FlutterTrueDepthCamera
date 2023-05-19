@@ -25,7 +25,7 @@ mixin _$TakePictureResult {
   FaceIdSensorData? get faceIdSensorData => throw _privateConstructorUsedError;
   @JsonKey(name: "image")
   CameraImage get cameraImage => throw _privateConstructorUsedError;
-  String get path => throw _privateConstructorUsedError;
+  String? get path => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -42,7 +42,7 @@ abstract class $TakePictureResultCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: "depthData") FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image") CameraImage cameraImage,
-      String path});
+      String? path});
 
   $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData;
   $CameraImageCopyWith<$Res> get cameraImage;
@@ -63,7 +63,7 @@ class _$TakePictureResultCopyWithImpl<$Res, $Val extends TakePictureResult>
   $Res call({
     Object? faceIdSensorData = freezed,
     Object? cameraImage = null,
-    Object? path = null,
+    Object? path = freezed,
   }) {
     return _then(_value.copyWith(
       faceIdSensorData: freezed == faceIdSensorData
@@ -74,10 +74,10 @@ class _$TakePictureResultCopyWithImpl<$Res, $Val extends TakePictureResult>
           ? _value.cameraImage
           : cameraImage // ignore: cast_nullable_to_non_nullable
               as CameraImage,
-      path: null == path
+      path: freezed == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ) as $Val);
   }
 
@@ -113,7 +113,7 @@ abstract class _$$_TakePictureResultCopyWith<$Res>
   $Res call(
       {@JsonKey(name: "depthData") FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image") CameraImage cameraImage,
-      String path});
+      String? path});
 
   @override
   $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData;
@@ -134,7 +134,7 @@ class __$$_TakePictureResultCopyWithImpl<$Res>
   $Res call({
     Object? faceIdSensorData = freezed,
     Object? cameraImage = null,
-    Object? path = null,
+    Object? path = freezed,
   }) {
     return _then(_$_TakePictureResult(
       faceIdSensorData: freezed == faceIdSensorData
@@ -145,10 +145,10 @@ class __$$_TakePictureResultCopyWithImpl<$Res>
           ? _value.cameraImage
           : cameraImage // ignore: cast_nullable_to_non_nullable
               as CameraImage,
-      path: null == path
+      path: freezed == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ));
   }
 }
@@ -172,7 +172,7 @@ class _$_TakePictureResult implements _TakePictureResult {
   @JsonKey(name: "image")
   final CameraImage cameraImage;
   @override
-  final String path;
+  final String? path;
 
   @override
   String toString() {
@@ -217,7 +217,7 @@ abstract class _TakePictureResult implements TakePictureResult {
           required final FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image")
           required final CameraImage cameraImage,
-      required final String path}) = _$_TakePictureResult;
+      required final String? path}) = _$_TakePictureResult;
 
   factory _TakePictureResult.fromJson(Map<String, dynamic> json) =
       _$_TakePictureResult.fromJson;
@@ -231,7 +231,7 @@ abstract class _TakePictureResult implements TakePictureResult {
   @JsonKey(name: "image")
   CameraImage get cameraImage;
   @override
-  String get path;
+  String? get path;
   @override
   @JsonKey(ignore: true)
   _$$_TakePictureResultCopyWith<_$_TakePictureResult> get copyWith =>
