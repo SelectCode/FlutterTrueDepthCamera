@@ -69,20 +69,17 @@ class DepthImage with _$DepthImage {
   /// Returns a grayscale [img.Image].
   img.Image toGrayscaleImage() {
     img.Image grayscaleImage = img.Image(width: width, height: height);
+    int depthDataLength = bytes.length;
 
-    int byteLength = bytes.length;
-
-    for (int i = 0; i < byteLength; i += 3) {
-      int grayscaleValueR = i < byteLength ? bytes[i] : 0;
-      int grayscaleValueG = i + 1 < byteLength ? bytes[i + 1] : 0;
-      int grayscaleValueB = i + 2 < byteLength ? bytes[i + 2] : 0;
+    for (int i = 0; i < depthDataLength; i += 3) {
+      int depthValue = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
 
       grayscaleImage.data!.setPixelRgb(
-        (i ~/ 3) % width,
-        (i ~/ 3) ~/ width,
-        grayscaleValueR,
-        grayscaleValueG,
-        grayscaleValueB,
+        ((i / 3) % width) as int,
+        (i / 3) ~/ width,
+        (depthValue >> 16) & 0xFF,
+        (depthValue >> 8) & 0xFF,
+        depthValue & 0xFF,
       );
     }
 
