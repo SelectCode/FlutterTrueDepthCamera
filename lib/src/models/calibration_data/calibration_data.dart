@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
-import 'package:cv_camera/cv_camera.dart';
 import 'package:cv_camera/src/utils/converters/float64_list_converter.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../cv_camera.dart';
 import 'cg_point.dart';
 import 'cg_size.dart';
 import 'cg_vector.dart';
