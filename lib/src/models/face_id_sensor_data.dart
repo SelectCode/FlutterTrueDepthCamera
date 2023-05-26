@@ -55,7 +55,7 @@ class DepthImage with _$DepthImage {
     required double minDepth,
     required int width,
     required int height,
-    required Uint16List bytes,
+    required Uint8List bytes,
   }) = _DepthImage;
 
   const DepthImage._();
@@ -72,15 +72,13 @@ class DepthImage with _$DepthImage {
     img.Image grayscaleImage = img.Image(
       width: width,
       height: height,
-      numChannels: 1,
-      format: img.Format.uint16,
     );
 
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
         int depth = bytes[y * width + x];
         // Setting the pixel value as grayscale
-        grayscaleImage.setPixel(x, y, img.ColorUint16(depth));
+        grayscaleImage.setPixelRgb(x, y, depth, depth, depth);
       }
     }
 
@@ -173,13 +171,13 @@ class FaceIdSensorData with _$FaceIdSensorData {
 
     // Normalize depth (z) values between 0 and 65535
     final normalizedDepthValues =
-        Uint16List(xyz.length ~/ 3); // Assuming xyz length is a multiple of 3
+        Uint8List(xyz.length ~/ 3); // Assuming xyz length is a multiple of 3
     for (int i = 0; i < xyz.length; i += 3) {
       double z = xyz[i + 2];
       if (z >= minDepth && z <= maxDepth) {
         // Convert z value to 0-65535 grayscale value
         normalizedDepthValues[i ~/ 3] =
-            ((z - minDepth) / (maxDepth - minDepth) * 65535).round();
+            ((z - minDepth) / (maxDepth - minDepth) * 255).round();
       }
     }
 
