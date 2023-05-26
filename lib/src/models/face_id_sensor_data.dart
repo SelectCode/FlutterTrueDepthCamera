@@ -95,6 +95,18 @@ class DepthImage with _$DepthImage {
     Uint8List jpegBytes = img.encodeJpg(grayscaleImage);
     return jpegBytes;
   }
+
+  /// Converts the [DepthImage] into PNG bytes.
+  ///
+  /// This function first converts the [DepthImage] into a grayscale [img.Image] using the [toGrayscaleImage]
+  /// function, then encodes this image into a PNG format.
+  ///
+  /// Returns a [Uint8List] containing the bytes of the PNG image.
+  Uint8List toPngBytes() {
+    img.Image grayscaleImage = toGrayscaleImage();
+    Uint8List pngBytes = img.encodePng(grayscaleImage);
+    return pngBytes;
+  }
 }
 
 @freezed
