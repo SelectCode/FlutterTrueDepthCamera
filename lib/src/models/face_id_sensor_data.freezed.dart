@@ -206,7 +206,7 @@ mixin _$DepthImage {
   double get minDepth => throw _privateConstructorUsedError;
   int get width => throw _privateConstructorUsedError;
   int get height => throw _privateConstructorUsedError;
-  Uint8List get bytes => throw _privateConstructorUsedError;
+  Uint16List get bytes => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $DepthImageCopyWith<DepthImage> get copyWith =>
@@ -224,7 +224,7 @@ abstract class $DepthImageCopyWith<$Res> {
       double minDepth,
       int width,
       int height,
-      Uint8List bytes});
+      Uint16List bytes});
 }
 
 /// @nodoc
@@ -266,7 +266,7 @@ class _$DepthImageCopyWithImpl<$Res, $Val extends DepthImage>
       bytes: null == bytes
           ? _value.bytes
           : bytes // ignore: cast_nullable_to_non_nullable
-              as Uint8List,
+              as Uint16List,
     ) as $Val);
   }
 }
@@ -284,7 +284,7 @@ abstract class _$$_DepthImageCopyWith<$Res>
       double minDepth,
       int width,
       int height,
-      Uint8List bytes});
+      Uint16List bytes});
 }
 
 /// @nodoc
@@ -324,7 +324,7 @@ class __$$_DepthImageCopyWithImpl<$Res>
       bytes: null == bytes
           ? _value.bytes
           : bytes // ignore: cast_nullable_to_non_nullable
-              as Uint8List,
+              as Uint16List,
     ));
   }
 }
@@ -349,7 +349,7 @@ class _$_DepthImage extends _DepthImage {
   @override
   final int height;
   @override
-  final Uint8List bytes;
+  final Uint16List bytes;
 
   @override
   String toString() {
@@ -387,7 +387,7 @@ abstract class _DepthImage extends DepthImage {
       required final double minDepth,
       required final int width,
       required final int height,
-      required final Uint8List bytes}) = _$_DepthImage;
+      required final Uint16List bytes}) = _$_DepthImage;
   const _DepthImage._() : super._();
 
   @override
@@ -399,7 +399,7 @@ abstract class _DepthImage extends DepthImage {
   @override
   int get height;
   @override
-  Uint8List get bytes;
+  Uint16List get bytes;
   @override
   @JsonKey(ignore: true)
   _$$_DepthImageCopyWith<_$_DepthImage> get copyWith =>

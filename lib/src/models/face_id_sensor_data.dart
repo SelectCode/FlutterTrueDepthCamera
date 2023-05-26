@@ -55,7 +55,7 @@ class DepthImage with _$DepthImage {
     required double minDepth,
     required int width,
     required int height,
-    required Uint8List bytes,
+    required Uint16List bytes,
   }) = _DepthImage;
 
   const DepthImage._();
@@ -68,19 +68,20 @@ class DepthImage with _$DepthImage {
   ///
   /// Returns a grayscale [img.Image].
   img.Image toGrayscaleImage() {
-    img.Image grayscaleImage = img.Image(width: width, height: height);
-    int depthDataLength = bytes.length;
+    // Create an empty image with the same dimensions as the depth image
+    img.Image grayscaleImage = img.Image(
+      width: width,
+      height: height,
+      numChannels: 1,
+      format: img.Format.uint16,
+    );
 
-    for (int i = 0; i < depthDataLength; i += 3) {
-      int depthValue = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
-
-      grayscaleImage.data!.setPixelRgb(
-        (i ~/ 3 % width),
-        (i / 3) ~/ width,
-        (depthValue >> 16) & 0xFF,
-        (depthValue >> 8) & 0xFF,
-        depthValue & 0xFF,
-      );
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        int depth = bytes[y * width + x];
+        // Setting the pixel value as grayscale
+        grayscaleImage.setPixel(x, y, img.ColorUint16(depth));
+      }
     }
 
     return grayscaleImage;
@@ -157,15 +158,15 @@ class FaceIdSensorData with _$FaceIdSensorData {
       }
     }
 
-    // Normalize depth (z) values between 0 and 255
+    // Normalize depth (z) values between 0 and 65535
     final normalizedDepthValues =
-        Uint8List(xyz.length ~/ 3); // Assuming xyz length is a multiple of 3
+        Uint16List(xyz.length ~/ 3); // Assuming xyz length is a multiple of 3
     for (int i = 0; i < xyz.length; i += 3) {
       double z = xyz[i + 2];
       if (z >= minDepth && z <= maxDepth) {
-        // Convert z value to 0-255 grayscale value
+        // Convert z value to 0-65535 grayscale value
         normalizedDepthValues[i ~/ 3] =
-            ((z - minDepth) / (maxDepth - minDepth) * 255).round();
+            ((z - minDepth) / (maxDepth - minDepth) * 65535).round();
       }
     }
 
