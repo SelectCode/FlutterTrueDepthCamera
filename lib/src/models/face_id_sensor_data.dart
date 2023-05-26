@@ -75,7 +75,7 @@ class DepthImage with _$DepthImage {
       int depthValue = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
 
       grayscaleImage.data!.setPixelRgb(
-        ((i / 3) % width) as int,
+        (i ~/ 3 % width),
         (i / 3) ~/ width,
         (depthValue >> 16) & 0xFF,
         (depthValue >> 8) & 0xFF,
