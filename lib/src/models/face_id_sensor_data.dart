@@ -110,6 +110,19 @@ class DepthImage with _$DepthImage {
     Uint8List pngBytes = img.encodePng(grayscaleImage);
     return pngBytes;
   }
+
+  // Converts the [DepthImage] into a TIFF image.
+  ///
+
+  /// This function first converts the [DepthImage] into a grayscale [img.Image] using the [toGrayscaleImage]
+  /// function, then encodes this image into a TIFF format.
+  ///
+  /// Returns a [Uint8List] containing the bytes of the TIFF image.
+  Uint8List toTiffBytes() {
+    img.Image grayscaleImage = toGrayscaleImage();
+    Uint8List tiffBytes = img.encodeTiff(grayscaleImage);
+    return tiffBytes;
+  }
 }
 
 @freezed
