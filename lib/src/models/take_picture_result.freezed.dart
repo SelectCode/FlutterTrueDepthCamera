@@ -46,6 +46,8 @@ abstract class $TakePictureResultCopyWith<$Res> {
       CameraPitch pitch,
       String? path});
 
+  $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData;
+  $CameraImageCopyWith<$Res> get cameraImage;
   $CameraPitchCopyWith<$Res> get pitch;
 }
 
@@ -63,7 +65,7 @@ class _$TakePictureResultCopyWithImpl<$Res, $Val extends TakePictureResult>
   @override
   $Res call({
     Object? faceIdSensorData = freezed,
-    Object? cameraImage = freezed,
+    Object? cameraImage = null,
     Object? pitch = null,
     Object? path = freezed,
   }) {
@@ -72,7 +74,7 @@ class _$TakePictureResultCopyWithImpl<$Res, $Val extends TakePictureResult>
           ? _value.faceIdSensorData
           : faceIdSensorData // ignore: cast_nullable_to_non_nullable
               as FaceIdSensorData?,
-      cameraImage: freezed == cameraImage
+      cameraImage: null == cameraImage
           ? _value.cameraImage
           : cameraImage // ignore: cast_nullable_to_non_nullable
               as CameraImage,
@@ -85,6 +87,26 @@ class _$TakePictureResultCopyWithImpl<$Res, $Val extends TakePictureResult>
           : path // ignore: cast_nullable_to_non_nullable
               as String?,
     ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData {
+    if (_value.faceIdSensorData == null) {
+      return null;
+    }
+
+    return $FaceIdSensorDataCopyWith<$Res>(_value.faceIdSensorData!, (value) {
+      return _then(_value.copyWith(faceIdSensorData: value) as $Val);
+    });
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $CameraImageCopyWith<$Res> get cameraImage {
+    return $CameraImageCopyWith<$Res>(_value.cameraImage, (value) {
+      return _then(_value.copyWith(cameraImage: value) as $Val);
+    });
   }
 
   @override
@@ -111,6 +133,10 @@ abstract class _$$_TakePictureResultCopyWith<$Res>
       String? path});
 
   @override
+  $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData;
+  @override
+  $CameraImageCopyWith<$Res> get cameraImage;
+  @override
   $CameraPitchCopyWith<$Res> get pitch;
 }
 
@@ -126,7 +152,7 @@ class __$$_TakePictureResultCopyWithImpl<$Res>
   @override
   $Res call({
     Object? faceIdSensorData = freezed,
-    Object? cameraImage = freezed,
+    Object? cameraImage = null,
     Object? pitch = null,
     Object? path = freezed,
   }) {
@@ -135,7 +161,7 @@ class __$$_TakePictureResultCopyWithImpl<$Res>
           ? _value.faceIdSensorData
           : faceIdSensorData // ignore: cast_nullable_to_non_nullable
               as FaceIdSensorData?,
-      cameraImage: freezed == cameraImage
+      cameraImage: null == cameraImage
           ? _value.cameraImage
           : cameraImage // ignore: cast_nullable_to_non_nullable
               as CameraImage,
@@ -185,22 +211,18 @@ class _$_TakePictureResult implements _TakePictureResult {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_TakePictureResult &&
-            const DeepCollectionEquality()
-                .equals(other.faceIdSensorData, faceIdSensorData) &&
-            const DeepCollectionEquality()
-                .equals(other.cameraImage, cameraImage) &&
+            (identical(other.faceIdSensorData, faceIdSensorData) ||
+                other.faceIdSensorData == faceIdSensorData) &&
+            (identical(other.cameraImage, cameraImage) ||
+                other.cameraImage == cameraImage) &&
             (identical(other.pitch, pitch) || other.pitch == pitch) &&
             (identical(other.path, path) || other.path == path));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(faceIdSensorData),
-      const DeepCollectionEquality().hash(cameraImage),
-      pitch,
-      path);
+  int get hashCode =>
+      Object.hash(runtimeType, faceIdSensorData, cameraImage, pitch, path);
 
   @JsonKey(ignore: true)
   @override
