@@ -20,6 +20,7 @@ dependencies:
   clock: ^1.1.1
   path: ^1.8.2
   image: ^4.0.17
+  sensors_plus: ^3.0.2
 
 dev_dependencies:
   flutter_test:

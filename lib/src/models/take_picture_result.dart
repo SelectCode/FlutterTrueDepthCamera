@@ -1,3 +1,4 @@
+import 'package:cv_camera/cv_camera.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'camera_image.dart';
@@ -13,6 +14,7 @@ class TakePictureResult with _$TakePictureResult {
     /// Is `null` when CameraDirection is not front
     @JsonKey(name: "depthData") required FaceIdSensorData? faceIdSensorData,
     @JsonKey(name: "image") required CameraImage cameraImage,
+    required CameraPitch pitch,
     String? path,
   }) = _TakePictureResult;
 

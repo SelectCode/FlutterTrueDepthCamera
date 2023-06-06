@@ -6,6 +6,7 @@ export 'src/misc/camera_shoot_effect.dart';
 export 'src/models/models.dart';
 export 'src/preview/camera_preview.dart';
 export 'src/utils/image_builder.dart';
+export 'src/misc/pitch/camera_pitch.dart';
 
 abstract class CvCamera {
   static CameraController getCameraController(

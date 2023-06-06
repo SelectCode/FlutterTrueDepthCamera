@@ -8,11 +8,9 @@ part of 'take_picture_result.dart';
 
 _$_TakePictureResult _$$_TakePictureResultFromJson(Map<String, dynamic> json) =>
     _$_TakePictureResult(
-      faceIdSensorData: json['depthData'] == null
-          ? null
-          : FaceIdSensorData.fromJson(
-              json['depthData'] as Map<String, dynamic>),
-      cameraImage: CameraImage.fromJson(json['image'] as Map<String, dynamic>),
+      faceIdSensorData: json['depthData'],
+      cameraImage: json['image'],
+      pitch: CameraPitch.fromJson(json['pitch'] as Map<String, dynamic>),
       path: json['path'] as String?,
     );
 
@@ -21,5 +19,12 @@ Map<String, dynamic> _$$_TakePictureResultToJson(
     <String, dynamic>{
       'depthData': instance.faceIdSensorData,
       'image': instance.cameraImage,
+      'pitch': instance.pitch,
+      'path': instance.path,
+    };
+tring, dynamic>{
+      'depthData': instance.faceIdSensorData,
+      'image': instance.cameraImage,
+      'pitch': instance.pitch,
       'path': instance.path,
     };

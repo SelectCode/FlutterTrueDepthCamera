@@ -28,10 +28,6 @@ part 'face_id_sensor_data.g.dart';
 /// These are the pixel coordinates where the camera's optical axis intersects the image plane.
 @freezed
 class CameraIntrinsics with _$CameraIntrinsics {
-  @JsonSerializable(
-    includeIfNull: false,
-    fieldRename: FieldRename.snake,
-  )
   const factory CameraIntrinsics({
     required double intrinsicsFx,
     required double intrinsicsFy,
@@ -49,9 +45,6 @@ class CameraIntrinsics with _$CameraIntrinsics {
       intrinsicsCy: data.intrinsicMatrix[2].y,
     );
   }
-
-  factory CameraIntrinsics.fromJson(Map<String, dynamic> json) =>
-      _$CameraIntrinsicsFromJson(json);
 }
 
 @freezed

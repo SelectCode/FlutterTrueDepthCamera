@@ -3,12 +3,14 @@ import 'dart:io';
 
 import 'package:clock/clock.dart';
 import 'package:cv_camera/src/controller/camera_controller.dart';
+import 'package:cv_camera/src/misc/pitch/pitch.dart';
 import 'package:cv_camera/src/utils/image_builder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../cv_camera.dart';
 import '../models/models.dart';
 
 class CameraControllerImpl implements CameraController {
@@ -130,16 +132,12 @@ class CameraControllerImpl implements CameraController {
 
   @override
   Future<TakePictureResult> takePicture({bool saveImage = false}) async {
-    final stopwatch = Stopwatch()..start();
     await readyCompleter.future;
-    print("readyCompleter: ${stopwatch.elapsedMilliseconds}");
     final data = await methodChannel.invokeMethod("takePicture");
-    print("takePicture: ${stopwatch.elapsedMilliseconds}");
-    final response = Map<String, dynamic>.from(data);
-    print("response: ${stopwatch.elapsedMilliseconds}");
+    final response = Map<String, dynamic>.from(data)
+      ..addAll({'pitch': (await _getCurrentPitch()).toJson()});
     if (!saveImage) {
       final result = TakePictureResult.fromJson(response);
-      print("result: ${stopwatch.elapsedMilliseconds}");
       return result;
     }
     return await compute<PictureHandlerParams, TakePictureResult>(
@@ -150,6 +148,12 @@ class CameraControllerImpl implements CameraController {
         clock: clock,
       ),
     );
+  }
+
+  final PitchService _pitchService = PitchService();
+
+  Future<CameraPitch> _getCurrentPitch() async {
+    return await _pitchService.getPitch();
   }
 
   /// Is `true` when controller is initialized and ready to be operated on.

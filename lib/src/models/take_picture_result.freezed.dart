@@ -25,6 +25,7 @@ mixin _$TakePictureResult {
   FaceIdSensorData? get faceIdSensorData => throw _privateConstructorUsedError;
   @JsonKey(name: "image")
   CameraImage get cameraImage => throw _privateConstructorUsedError;
+  CameraPitch get pitch => throw _privateConstructorUsedError;
   String? get path => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -42,10 +43,10 @@ abstract class $TakePictureResultCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: "depthData") FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image") CameraImage cameraImage,
+      CameraPitch pitch,
       String? path});
 
-  $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData;
-  $CameraImageCopyWith<$Res> get cameraImage;
+  $CameraPitchCopyWith<$Res> get pitch;
 }
 
 /// @nodoc
@@ -62,7 +63,8 @@ class _$TakePictureResultCopyWithImpl<$Res, $Val extends TakePictureResult>
   @override
   $Res call({
     Object? faceIdSensorData = freezed,
-    Object? cameraImage = null,
+    Object? cameraImage = freezed,
+    Object? pitch = null,
     Object? path = freezed,
   }) {
     return _then(_value.copyWith(
@@ -70,10 +72,14 @@ class _$TakePictureResultCopyWithImpl<$Res, $Val extends TakePictureResult>
           ? _value.faceIdSensorData
           : faceIdSensorData // ignore: cast_nullable_to_non_nullable
               as FaceIdSensorData?,
-      cameraImage: null == cameraImage
+      cameraImage: freezed == cameraImage
           ? _value.cameraImage
           : cameraImage // ignore: cast_nullable_to_non_nullable
               as CameraImage,
+      pitch: null == pitch
+          ? _value.pitch
+          : pitch // ignore: cast_nullable_to_non_nullable
+              as CameraPitch,
       path: freezed == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
@@ -83,21 +89,9 @@ class _$TakePictureResultCopyWithImpl<$Res, $Val extends TakePictureResult>
 
   @override
   @pragma('vm:prefer-inline')
-  $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData {
-    if (_value.faceIdSensorData == null) {
-      return null;
-    }
-
-    return $FaceIdSensorDataCopyWith<$Res>(_value.faceIdSensorData!, (value) {
-      return _then(_value.copyWith(faceIdSensorData: value) as $Val);
-    });
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $CameraImageCopyWith<$Res> get cameraImage {
-    return $CameraImageCopyWith<$Res>(_value.cameraImage, (value) {
-      return _then(_value.copyWith(cameraImage: value) as $Val);
+  $CameraPitchCopyWith<$Res> get pitch {
+    return $CameraPitchCopyWith<$Res>(_value.pitch, (value) {
+      return _then(_value.copyWith(pitch: value) as $Val);
     });
   }
 }
@@ -113,12 +107,11 @@ abstract class _$$_TakePictureResultCopyWith<$Res>
   $Res call(
       {@JsonKey(name: "depthData") FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image") CameraImage cameraImage,
+      CameraPitch pitch,
       String? path});
 
   @override
-  $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData;
-  @override
-  $CameraImageCopyWith<$Res> get cameraImage;
+  $CameraPitchCopyWith<$Res> get pitch;
 }
 
 /// @nodoc
@@ -133,7 +126,8 @@ class __$$_TakePictureResultCopyWithImpl<$Res>
   @override
   $Res call({
     Object? faceIdSensorData = freezed,
-    Object? cameraImage = null,
+    Object? cameraImage = freezed,
+    Object? pitch = null,
     Object? path = freezed,
   }) {
     return _then(_$_TakePictureResult(
@@ -141,10 +135,14 @@ class __$$_TakePictureResultCopyWithImpl<$Res>
           ? _value.faceIdSensorData
           : faceIdSensorData // ignore: cast_nullable_to_non_nullable
               as FaceIdSensorData?,
-      cameraImage: null == cameraImage
+      cameraImage: freezed == cameraImage
           ? _value.cameraImage
           : cameraImage // ignore: cast_nullable_to_non_nullable
               as CameraImage,
+      pitch: null == pitch
+          ? _value.pitch
+          : pitch // ignore: cast_nullable_to_non_nullable
+              as CameraPitch,
       path: freezed == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
@@ -159,6 +157,7 @@ class _$_TakePictureResult implements _TakePictureResult {
   const _$_TakePictureResult(
       {@JsonKey(name: "depthData") required this.faceIdSensorData,
       @JsonKey(name: "image") required this.cameraImage,
+      required this.pitch,
       this.path});
 
   factory _$_TakePictureResult.fromJson(Map<String, dynamic> json) =>
@@ -172,11 +171,13 @@ class _$_TakePictureResult implements _TakePictureResult {
   @JsonKey(name: "image")
   final CameraImage cameraImage;
   @override
+  final CameraPitch pitch;
+  @override
   final String? path;
 
   @override
   String toString() {
-    return 'TakePictureResult(faceIdSensorData: $faceIdSensorData, cameraImage: $cameraImage, path: $path)';
+    return 'TakePictureResult(faceIdSensorData: $faceIdSensorData, cameraImage: $cameraImage, pitch: $pitch, path: $path)';
   }
 
   @override
@@ -184,17 +185,22 @@ class _$_TakePictureResult implements _TakePictureResult {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_TakePictureResult &&
-            (identical(other.faceIdSensorData, faceIdSensorData) ||
-                other.faceIdSensorData == faceIdSensorData) &&
-            (identical(other.cameraImage, cameraImage) ||
-                other.cameraImage == cameraImage) &&
+            const DeepCollectionEquality()
+                .equals(other.faceIdSensorData, faceIdSensorData) &&
+            const DeepCollectionEquality()
+                .equals(other.cameraImage, cameraImage) &&
+            (identical(other.pitch, pitch) || other.pitch == pitch) &&
             (identical(other.path, path) || other.path == path));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, faceIdSensorData, cameraImage, path);
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(faceIdSensorData),
+      const DeepCollectionEquality().hash(cameraImage),
+      pitch,
+      path);
 
   @JsonKey(ignore: true)
   @override
@@ -217,6 +223,7 @@ abstract class _TakePictureResult implements TakePictureResult {
           required final FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image")
           required final CameraImage cameraImage,
+      required final CameraPitch pitch,
       final String? path}) = _$_TakePictureResult;
 
   factory _TakePictureResult.fromJson(Map<String, dynamic> json) =
@@ -230,6 +237,8 @@ abstract class _TakePictureResult implements TakePictureResult {
   @override
   @JsonKey(name: "image")
   CameraImage get cameraImage;
+  @override
+  CameraPitch get pitch;
   @override
   String? get path;
   @override
