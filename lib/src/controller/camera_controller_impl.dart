@@ -63,6 +63,7 @@ class CameraControllerImpl implements CameraController {
     final width = sizeResponse["width"] as num;
     final height = sizeResponse["height"] as num;
     previewSize = Size(width.toDouble(), height.toDouble());
+    _pitchService.startListening();
   }
 
   bool _isStreaming = false;
@@ -173,7 +174,8 @@ class CameraControllerImpl implements CameraController {
   @override
   Future<void> dispose() async {
     await stopImageStream();
-    methodChannel.invokeMethod('dispose');
+    await methodChannel.invokeMethod('dispose');
+    _pitchService.stopListening();
   }
 
   @override
