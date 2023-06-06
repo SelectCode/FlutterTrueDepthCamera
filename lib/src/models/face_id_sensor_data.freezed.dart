@@ -14,6 +14,10 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
+CameraIntrinsics _$CameraIntrinsicsFromJson(Map<String, dynamic> json) {
+  return _CameraIntrinsics.fromJson(json);
+}
+
 /// @nodoc
 mixin _$CameraIntrinsics {
   double get intrinsicsFx => throw _privateConstructorUsedError;
@@ -21,6 +25,7 @@ mixin _$CameraIntrinsics {
   double get intrinsicsCx => throw _privateConstructorUsedError;
   double get intrinsicsCy => throw _privateConstructorUsedError;
 
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $CameraIntrinsicsCopyWith<CameraIntrinsics> get copyWith =>
       throw _privateConstructorUsedError;
@@ -132,12 +137,16 @@ class __$$_CameraIntrinsicsCopyWithImpl<$Res>
 
 /// @nodoc
 
+@JsonSerializable(includeIfNull: false, fieldRename: FieldRename.snake)
 class _$_CameraIntrinsics implements _CameraIntrinsics {
   const _$_CameraIntrinsics(
       {required this.intrinsicsFx,
       required this.intrinsicsFy,
       required this.intrinsicsCx,
       required this.intrinsicsCy});
+
+  factory _$_CameraIntrinsics.fromJson(Map<String, dynamic> json) =>
+      _$$_CameraIntrinsicsFromJson(json);
 
   @override
   final double intrinsicsFx;
@@ -168,6 +177,7 @@ class _$_CameraIntrinsics implements _CameraIntrinsics {
                 other.intrinsicsCy == intrinsicsCy));
   }
 
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType, intrinsicsFx, intrinsicsFy, intrinsicsCx, intrinsicsCy);
@@ -177,6 +187,13 @@ class _$_CameraIntrinsics implements _CameraIntrinsics {
   @pragma('vm:prefer-inline')
   _$$_CameraIntrinsicsCopyWith<_$_CameraIntrinsics> get copyWith =>
       __$$_CameraIntrinsicsCopyWithImpl<_$_CameraIntrinsics>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$_CameraIntrinsicsToJson(
+      this,
+    );
+  }
 }
 
 abstract class _CameraIntrinsics implements CameraIntrinsics {
@@ -185,6 +202,9 @@ abstract class _CameraIntrinsics implements CameraIntrinsics {
       required final double intrinsicsFy,
       required final double intrinsicsCx,
       required final double intrinsicsCy}) = _$_CameraIntrinsics;
+
+  factory _CameraIntrinsics.fromJson(Map<String, dynamic> json) =
+      _$_CameraIntrinsics.fromJson;
 
   @override
   double get intrinsicsFx;
