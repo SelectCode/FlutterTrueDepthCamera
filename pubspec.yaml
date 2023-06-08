@@ -5,7 +5,7 @@ homepage: https://selectcode.de
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 environment:
-  sdk: '>=2.18.5 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'
   flutter: ">=2.5.0"
 
 dependencies:
@@ -21,6 +21,7 @@ dependencies:
   path: ^1.8.2
   image: ^4.0.17
   sensors_plus: ^3.0.2
+  collection: ^1.17.1
 
 dev_dependencies:
   flutter_test:

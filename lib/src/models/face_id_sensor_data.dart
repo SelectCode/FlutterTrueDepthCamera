@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:collection/collection.dart';
 import 'package:cv_camera/cv_camera.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:image/image.dart' as img;
@@ -205,6 +206,14 @@ class FaceIdSensorData with _$FaceIdSensorData {
       height: height,
       bytes: normalizedDepthValues,
     );
+  }
+
+  List<(double, double, double)> getXYZNoIntrinsics() {
+    return depthValues.mapIndexed((offset, z) {
+      final x = offset % width;
+      final y = offset ~/ width;
+      return (x.toDouble(), y.toDouble(), z);
+    }).toList();
   }
 
   factory FaceIdSensorData.fromJson(Map<String, dynamic> json) =>
