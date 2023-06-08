@@ -52,6 +52,10 @@ class DepthImage with _$DepthImage {
   const factory DepthImage({
     required double maxDepth,
     required double minDepth,
+    required double maxX,
+    required double minX,
+    required double maxY,
+    required double minY,
     required int width,
     required int height,
     required Uint8List bytes,
@@ -157,6 +161,10 @@ class FaceIdSensorData with _$FaceIdSensorData {
   DepthImage toDepthImage({double? discardAbove, double? discardBelow}) {
     double maxDepth = double.negativeInfinity;
     double minDepth = double.infinity;
+    double maxX = double.negativeInfinity;
+    double minX = double.infinity;
+    double maxY = double.negativeInfinity;
+    double minY = double.infinity;
 
     // Find min and max depth (z) values within valid range
     for (int i = 0; i < xyz.length; i += 3) {
@@ -165,6 +173,12 @@ class FaceIdSensorData with _$FaceIdSensorData {
           (discardAbove == null || z <= discardAbove)) {
         maxDepth = math.max(maxDepth, z);
         minDepth = math.min(minDepth, z);
+        double x = xyz[i];
+        double y = xyz[i + 1];
+        maxX = math.max(maxX, x);
+        minX = math.min(minX, x);
+        maxY = math.max(maxY, y);
+        minY = math.min(minY, y);
       }
     }
 
@@ -174,7 +188,7 @@ class FaceIdSensorData with _$FaceIdSensorData {
     for (int i = 0; i < xyz.length; i += 3) {
       double z = xyz[i + 2];
       if (z >= minDepth && z <= maxDepth) {
-        // Convert z value to 0-65535 grayscale value
+        // Convert z value to 0-255 grayscale value
         normalizedDepthValues[i ~/ 3] =
             ((z - minDepth) / (maxDepth - minDepth) * 255).round();
       }
@@ -183,6 +197,10 @@ class FaceIdSensorData with _$FaceIdSensorData {
     return DepthImage(
       maxDepth: maxDepth,
       minDepth: minDepth,
+      maxX: maxX,
+      minX: minX,
+      maxY: maxY,
+      minY: minY,
       width: width,
       height: height,
       bytes: normalizedDepthValues,

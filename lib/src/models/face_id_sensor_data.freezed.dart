@@ -204,6 +204,10 @@ abstract class _CameraIntrinsics implements CameraIntrinsics {
 mixin _$DepthImage {
   double get maxDepth => throw _privateConstructorUsedError;
   double get minDepth => throw _privateConstructorUsedError;
+  double get maxX => throw _privateConstructorUsedError;
+  double get minX => throw _privateConstructorUsedError;
+  double get maxY => throw _privateConstructorUsedError;
+  double get minY => throw _privateConstructorUsedError;
   int get width => throw _privateConstructorUsedError;
   int get height => throw _privateConstructorUsedError;
   Uint8List get bytes => throw _privateConstructorUsedError;
@@ -222,6 +226,10 @@ abstract class $DepthImageCopyWith<$Res> {
   $Res call(
       {double maxDepth,
       double minDepth,
+      double maxX,
+      double minX,
+      double maxY,
+      double minY,
       int width,
       int height,
       Uint8List bytes});
@@ -242,6 +250,10 @@ class _$DepthImageCopyWithImpl<$Res, $Val extends DepthImage>
   $Res call({
     Object? maxDepth = null,
     Object? minDepth = null,
+    Object? maxX = null,
+    Object? minX = null,
+    Object? maxY = null,
+    Object? minY = null,
     Object? width = null,
     Object? height = null,
     Object? bytes = null,
@@ -254,6 +266,22 @@ class _$DepthImageCopyWithImpl<$Res, $Val extends DepthImage>
       minDepth: null == minDepth
           ? _value.minDepth
           : minDepth // ignore: cast_nullable_to_non_nullable
+              as double,
+      maxX: null == maxX
+          ? _value.maxX
+          : maxX // ignore: cast_nullable_to_non_nullable
+              as double,
+      minX: null == minX
+          ? _value.minX
+          : minX // ignore: cast_nullable_to_non_nullable
+              as double,
+      maxY: null == maxY
+          ? _value.maxY
+          : maxY // ignore: cast_nullable_to_non_nullable
+              as double,
+      minY: null == minY
+          ? _value.minY
+          : minY // ignore: cast_nullable_to_non_nullable
               as double,
       width: null == width
           ? _value.width
@@ -282,6 +310,10 @@ abstract class _$$_DepthImageCopyWith<$Res>
   $Res call(
       {double maxDepth,
       double minDepth,
+      double maxX,
+      double minX,
+      double maxY,
+      double minY,
       int width,
       int height,
       Uint8List bytes});
@@ -300,6 +332,10 @@ class __$$_DepthImageCopyWithImpl<$Res>
   $Res call({
     Object? maxDepth = null,
     Object? minDepth = null,
+    Object? maxX = null,
+    Object? minX = null,
+    Object? maxY = null,
+    Object? minY = null,
     Object? width = null,
     Object? height = null,
     Object? bytes = null,
@@ -312,6 +348,22 @@ class __$$_DepthImageCopyWithImpl<$Res>
       minDepth: null == minDepth
           ? _value.minDepth
           : minDepth // ignore: cast_nullable_to_non_nullable
+              as double,
+      maxX: null == maxX
+          ? _value.maxX
+          : maxX // ignore: cast_nullable_to_non_nullable
+              as double,
+      minX: null == minX
+          ? _value.minX
+          : minX // ignore: cast_nullable_to_non_nullable
+              as double,
+      maxY: null == maxY
+          ? _value.maxY
+          : maxY // ignore: cast_nullable_to_non_nullable
+              as double,
+      minY: null == minY
+          ? _value.minY
+          : minY // ignore: cast_nullable_to_non_nullable
               as double,
       width: null == width
           ? _value.width
@@ -335,6 +387,10 @@ class _$_DepthImage extends _DepthImage {
   const _$_DepthImage(
       {required this.maxDepth,
       required this.minDepth,
+      required this.maxX,
+      required this.minX,
+      required this.maxY,
+      required this.minY,
       required this.width,
       required this.height,
       required this.bytes})
@@ -345,6 +401,14 @@ class _$_DepthImage extends _DepthImage {
   @override
   final double minDepth;
   @override
+  final double maxX;
+  @override
+  final double minX;
+  @override
+  final double maxY;
+  @override
+  final double minY;
+  @override
   final int width;
   @override
   final int height;
@@ -353,7 +417,7 @@ class _$_DepthImage extends _DepthImage {
 
   @override
   String toString() {
-    return 'DepthImage(maxDepth: $maxDepth, minDepth: $minDepth, width: $width, height: $height, bytes: $bytes)';
+    return 'DepthImage(maxDepth: $maxDepth, minDepth: $minDepth, maxX: $maxX, minX: $minX, maxY: $maxY, minY: $minY, width: $width, height: $height, bytes: $bytes)';
   }
 
   @override
@@ -365,14 +429,18 @@ class _$_DepthImage extends _DepthImage {
                 other.maxDepth == maxDepth) &&
             (identical(other.minDepth, minDepth) ||
                 other.minDepth == minDepth) &&
+            (identical(other.maxX, maxX) || other.maxX == maxX) &&
+            (identical(other.minX, minX) || other.minX == minX) &&
+            (identical(other.maxY, maxY) || other.maxY == maxY) &&
+            (identical(other.minY, minY) || other.minY == minY) &&
             (identical(other.width, width) || other.width == width) &&
             (identical(other.height, height) || other.height == height) &&
             const DeepCollectionEquality().equals(other.bytes, bytes));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, maxDepth, minDepth, width,
-      height, const DeepCollectionEquality().hash(bytes));
+  int get hashCode => Object.hash(runtimeType, maxDepth, minDepth, maxX, minX,
+      maxY, minY, width, height, const DeepCollectionEquality().hash(bytes));
 
   @JsonKey(ignore: true)
   @override
@@ -385,6 +453,10 @@ abstract class _DepthImage extends DepthImage {
   const factory _DepthImage(
       {required final double maxDepth,
       required final double minDepth,
+      required final double maxX,
+      required final double minX,
+      required final double maxY,
+      required final double minY,
       required final int width,
       required final int height,
       required final Uint8List bytes}) = _$_DepthImage;
@@ -394,6 +466,14 @@ abstract class _DepthImage extends DepthImage {
   double get maxDepth;
   @override
   double get minDepth;
+  @override
+  double get maxX;
+  @override
+  double get minX;
+  @override
+  double get maxY;
+  @override
+  double get minY;
   @override
   int get width;
   @override
