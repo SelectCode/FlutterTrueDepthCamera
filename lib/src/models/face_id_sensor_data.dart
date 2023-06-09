@@ -173,53 +173,6 @@ class FaceIdSensorData with _$FaceIdSensorData {
     double maxY = double.negativeInfinity;
     double minY = double.infinity;
 
-    final xyz = getXYZNoIntrinsics();
-    // Find min and max depth (z) values within valid range
-    for (final (x, y, z) in xyz) {
-      if ((discardBelow == null || z >= discardBelow) &&
-          (discardAbove == null || z <= discardAbove)) {
-        maxDepth = math.max(maxDepth, z);
-        minDepth = math.min(minDepth, z);
-        maxX = math.max(maxX, x);
-        minX = math.min(minX, x);
-        maxY = math.max(maxY, y);
-        minY = math.min(minY, y);
-      }
-    }
-
-    // Normalize depth (z) values between 0 and 65535
-    final normalizedDepthValues =
-        Uint8List(xyz.length); // Assuming xyz length is a multiple of 3
-    for (int i = 0; i < xyz.length; i++) {
-      final (_, _, z) = xyz[i];
-      if (z >= minDepth && z <= maxDepth) {
-        // Convert z value to 0-255 grayscale value
-        normalizedDepthValues[i] =
-            ((z - minDepth) / (maxDepth - minDepth) * 255).round();
-      }
-    }
-
-    return DepthImage(
-      maxDepth: maxDepth,
-      minDepth: minDepth,
-      maxX: maxX,
-      minX: minX,
-      maxY: maxY,
-      minY: minY,
-      width: width,
-      height: height,
-      bytes: normalizedDepthValues,
-    );
-  }
-
-  DepthImage toDepthImageLegacy({double? discardAbove, double? discardBelow}) {
-    double maxDepth = double.negativeInfinity;
-    double minDepth = double.infinity;
-    double maxX = double.negativeInfinity;
-    double minX = double.infinity;
-    double maxY = double.negativeInfinity;
-    double minY = double.infinity;
-
     // Find min and max depth (z) values within valid range
     for (int i = 0; i < xyz.length; i += 3) {
       double z = xyz[i + 2]; // Z value is the third element in the xyz set
