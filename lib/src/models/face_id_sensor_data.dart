@@ -41,16 +41,19 @@ class CameraIntrinsics with _$CameraIntrinsics {
   factory CameraIntrinsics.fromCalibrationData(
     CvCameraCalibrationData data, {
     required double imageWidth,
+    required double imageHeight,
   }) {
     final intrinsicMatrix = data.intrinsicMatrix;
     final referenceDimensions = data.intrinsicMatrixReferenceDimensions;
-    final ratio = imageWidth / referenceDimensions.width;
-    print(data);
+    final ratioWidth = imageWidth / referenceDimensions.width;
+    final ratioHeight = imageHeight / referenceDimensions.height;
+    print('ratioWidth: $ratioWidth');
+    print('ratioHeight: $ratioHeight');
     return CameraIntrinsics(
-      intrinsicsFx: intrinsicMatrix[0].x / ratio,
-      intrinsicsFy: intrinsicMatrix[1].y / ratio,
-      intrinsicsCx: intrinsicMatrix[2].x / ratio,
-      intrinsicsCy: intrinsicMatrix[2].y / ratio,
+      intrinsicsFx: intrinsicMatrix[0].x * ratioWidth,
+      intrinsicsFy: intrinsicMatrix[1].y * ratioHeight,
+      intrinsicsCx: intrinsicMatrix[2].x * ratioWidth,
+      intrinsicsCy: intrinsicMatrix[2].y * ratioHeight,
     );
   }
 }
@@ -190,7 +193,7 @@ class FaceIdSensorData with _$FaceIdSensorData {
       }
     }
 
-    // Normalize depth (z) values between 0 and 65535
+    // Normalize depth (z) values between 0 and 255
     final normalizedDepthValues =
         Uint8List(xyz.length ~/ 3); // Assuming xyz length is a multiple of 3
     for (int i = 0; i < xyz.length; i += 3) {
