@@ -33,7 +33,12 @@ class CvCameraCalibrationData with _$CvCameraCalibrationData {
 
   CameraIntrinsics toCameraIntrinsics({
     required double imageWidth,
+    required double imageHeight,
   }) {
-    return CameraIntrinsics.fromCalibrationData(this, imageWidth: imageWidth);
+    return CameraIntrinsics.fromCalibrationData(
+      this,
+      imageWidth: imageWidth,
+      imageHeight: imageHeight,
+    );
   }
 }
