@@ -169,7 +169,7 @@ class FaceIdSensorData with _$FaceIdSensorData {
   ///
   /// Note: This method assumes that the Float64List xyz is arranged in a manner consistent with
   /// the image's width and height, where every 3 elements represent the x, y and z coordinates of a point.
-  DepthImage toDepthImage({double? discardAbove, double? discardBelow}) {
+  DepthImage toDepthImage() {
     double maxDepth = double.negativeInfinity;
     double minDepth = double.infinity;
     double maxX = double.negativeInfinity;
@@ -177,21 +177,37 @@ class FaceIdSensorData with _$FaceIdSensorData {
     double maxY = double.negativeInfinity;
     double minY = double.infinity;
 
-    // Find min and max depth (z) values within valid range
+    List<double> zValues = List<double>.filled(xyz.length ~/ 3, 0);
+
+    // One pass to gather z values and find min and max for x, y, z
     for (int i = 0; i < xyz.length; i += 3) {
-      double z = xyz[i + 2]; // Z value is the third element in the xyz set
-      if ((discardBelow == null || z >= discardBelow) &&
-          (discardAbove == null || z <= discardAbove)) {
-        maxDepth = math.max(maxDepth, z);
-        minDepth = math.min(minDepth, z);
-        double x = xyz[i];
-        double y = xyz[i + 1];
-        maxX = math.max(maxX, x);
-        minX = math.min(minX, x);
-        maxY = math.max(maxY, y);
-        minY = math.min(minY, y);
-      }
+      double z = xyz[i + 2];
+      double x = xyz[i];
+      double y = xyz[i + 1];
+      zValues.add(z);
+      maxX = math.max(maxX, x);
+      minX = math.min(minX, x);
+      maxY = math.max(maxY, y);
+      minY = math.min(minY, y);
+      maxDepth = math.max(maxDepth, z);
+      minDepth = math.min(minDepth, z);
     }
+
+    // Calculate the quartiles
+    zValues.sort();
+    double Q1 = zValues[(zValues.length * 0.25).round()];
+    double Q3 = zValues[(zValues.length * 0.75).round()];
+
+    // Calculate the interquartile range
+    double IQR = Q3 - Q1;
+
+    // Define the discard values based on the IQR
+    double discardBelow = Q1 - 1.5 * IQR;
+    double discardAbove = Q3 + 1.5 * IQR;
+
+    // Filter outliers from min and max depths
+    minDepth = math.max(minDepth, discardBelow);
+    maxDepth = math.min(maxDepth, discardAbove);
 
     // Normalize depth (z) values between 0 and 255
     final normalizedDepthValues =
@@ -216,6 +232,40 @@ class FaceIdSensorData with _$FaceIdSensorData {
       height: height,
       bytes: normalizedDepthValues,
     );
+  }
+
+  double _quickselect(List<double> list, int n) {
+    // Note: This function will modify the original list
+    int from = 0;
+    int to = list.length - 1;
+
+    while (from < to) {
+      int r = from, w = to;
+      double mid = list[(r + w) >> 1];
+
+      while (r < w) {
+        if (list[r] >= mid) {
+          double t = list[w];
+          list[w] = list[r];
+          list[r] = t;
+          --w;
+        } else {
+          ++r;
+        }
+      }
+
+      if (list[r] > mid) {
+        --r;
+      }
+
+      if (n <= r) {
+        to = r;
+      } else {
+        from = r + 1;
+      }
+    }
+
+    return list[n];
   }
 
   List<(double, double, double)> getXYZNoIntrinsics() {
