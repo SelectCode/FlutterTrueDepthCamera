@@ -38,12 +38,18 @@ class CameraIntrinsics with _$CameraIntrinsics {
 
   /// Create a new instance of CameraIntrinsics from a CvCameraCalibrationData object.
   /// The intrinsic parameters are extracted from the intrinsicMatrix of the CvCameraCalibrationData object.
-  factory CameraIntrinsics.fromCalibrationData(CvCameraCalibrationData data) {
+  factory CameraIntrinsics.fromCalibrationData(
+    CvCameraCalibrationData data, {
+    required double depthImageWidth,
+  }) {
+    final intrinsicMatrix = data.intrinsicMatrix;
+    final referenceDimensions = data.intrinsicMatrixReferenceDimensions;
+    final ratio = depthImageWidth / referenceDimensions.width;
     return CameraIntrinsics(
-      intrinsicsFx: data.intrinsicMatrix[0].x,
-      intrinsicsFy: data.intrinsicMatrix[1].y,
-      intrinsicsCx: data.intrinsicMatrix[2].x,
-      intrinsicsCy: data.intrinsicMatrix[2].y,
+      intrinsicsFx: intrinsicMatrix[0].x / ratio,
+      intrinsicsFy: intrinsicMatrix[1].y / ratio,
+      intrinsicsCx: intrinsicMatrix[2].x / ratio,
+      intrinsicsCy: intrinsicMatrix[2].y / ratio,
     );
   }
 }
