@@ -4,15 +4,13 @@ import 'package:cv_camera/src/utils/converters/float64_list_converter.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../cv_camera.dart';
-import 'cg_point.dart';
-import 'cg_size.dart';
-import 'cg_vector.dart';
 
 export 'cg_point.dart';
 export 'cg_size.dart';
 export 'cg_vector.dart';
 
 part 'calibration_data.freezed.dart';
+
 part 'calibration_data.g.dart';
 
 @freezed
@@ -30,9 +28,12 @@ class CvCameraCalibrationData with _$CvCameraCalibrationData {
     @Float64ListConverter() required Float64List lensDistortionLookupTable,
     required CGPoint lensDistortionCenter,
   }) = _CvCameraCalibrationData;
+
   const CvCameraCalibrationData._();
 
-  CameraIntrinsics toCameraIntrinsics() {
-    return CameraIntrinsics.fromCalibrationData(this);
+  CameraIntrinsics toCameraIntrinsics({
+    required double imageWidth,
+  }) {
+    return CameraIntrinsics.fromCalibrationData(this, imageWidth: imageWidth);
   }
 }

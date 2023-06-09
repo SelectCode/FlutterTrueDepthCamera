@@ -40,11 +40,11 @@ class CameraIntrinsics with _$CameraIntrinsics {
   /// The intrinsic parameters are extracted from the intrinsicMatrix of the CvCameraCalibrationData object.
   factory CameraIntrinsics.fromCalibrationData(
     CvCameraCalibrationData data, {
-    required double depthImageWidth,
+    required double imageWidth,
   }) {
     final intrinsicMatrix = data.intrinsicMatrix;
     final referenceDimensions = data.intrinsicMatrixReferenceDimensions;
-    final ratio = depthImageWidth / referenceDimensions.width;
+    final ratio = imageWidth / referenceDimensions.width;
     return CameraIntrinsics(
       intrinsicsFx: intrinsicMatrix[0].x / ratio,
       intrinsicsFy: intrinsicMatrix[1].y / ratio,
