@@ -45,6 +45,7 @@ class CameraIntrinsics with _$CameraIntrinsics {
     final intrinsicMatrix = data.intrinsicMatrix;
     final referenceDimensions = data.intrinsicMatrixReferenceDimensions;
     final ratio = imageWidth / referenceDimensions.width;
+    print('ratio: $ratio');
     return CameraIntrinsics(
       intrinsicsFx: intrinsicMatrix[0].x / ratio,
       intrinsicsFy: intrinsicMatrix[1].y / ratio,
