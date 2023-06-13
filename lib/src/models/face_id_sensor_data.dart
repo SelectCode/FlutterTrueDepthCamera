@@ -203,14 +203,16 @@ class FaceIdSensorData with _$FaceIdSensorData {
     // One pass to gather z values and find min and max for x, y, z
     for (int i = 0; i < xyz.length; i += 3) {
       double z = xyz[i + 2];
-      double x = xyz[i];
-      double y = xyz[i + 1];
-      maxX = x > maxX ? x : maxX;
-      minX = x < minX ? x : minX;
-      maxY = y > maxY ? y : maxY;
-      minY = y < minY ? y : minY;
+      double xValue = xyz[i];
+      double yValue = xyz[i + 1];
+      maxX = xValue > maxX ? xValue : maxX;
+      minX = xValue < minX ? xValue : minX;
+      maxY = yValue > maxY ? yValue : maxY;
+      minY = yValue < minY ? yValue : minY;
       maxDepth = z > maxDepth ? z : maxDepth;
       minDepth = z < minDepth ? z : minDepth;
+      int x = i ~/ 3 % width;
+      int y = i ~/ 3 ~/ width;
       if (x == centerX && y == centerY) {
         centerZ = z;
       }
