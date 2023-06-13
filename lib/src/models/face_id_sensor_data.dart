@@ -205,12 +205,12 @@ class FaceIdSensorData with _$FaceIdSensorData {
       double x = xyz[i];
       double y = xyz[i + 1];
       zValues[i ~/ 3] = z;
-      maxX = math.max(maxX, x);
-      minX = math.min(minX, x);
-      maxY = math.max(maxY, y);
-      minY = math.min(minY, y);
-      maxDepth = math.max(maxDepth, z);
-      minDepth = math.min(minDepth, z);
+      maxX = x > maxX ? x : maxX;
+      minX = x < minX ? x : minX;
+      maxY = y > maxY ? y : maxY;
+      minY = y < minY ? y : minY;
+      maxDepth = z > maxDepth ? z : maxDepth;
+      minDepth = z < minDepth ? z : minDepth;
     }
 
     // The method first checks if optional parameters discardBelow or discardAbove are provided.
@@ -247,9 +247,19 @@ class FaceIdSensorData with _$FaceIdSensorData {
       discardAbove ??= Q3 + 1.5 * IQR;
     }
 
+    assert(!discardAbove.isNaN && !discardBelow.isNaN,
+        "discardAbove and discardBelow must be numbers");
+    assert(discardAbove >= discardBelow,
+        "discardAbove must be greater than or equal to discardBelow");
+
     // Filter outliers from min and max depths
     minDepth = math.max(minDepth, discardBelow);
     maxDepth = math.min(maxDepth, discardAbove);
+
+    assert(minDepth <= maxDepth,
+        "minDepth must be less than or equal to maxDepth");
+    assert(!minDepth.isNaN && !maxDepth.isNaN,
+        "minDepth and maxDepth must be numbers");
 
     // Normalize depth (z) values between 0 and 255
     final normalizedDepthValues =
