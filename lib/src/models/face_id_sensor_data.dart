@@ -197,54 +197,32 @@ class FaceIdSensorData with _$FaceIdSensorData {
     double maxY = double.negativeInfinity;
     double minY = double.infinity;
 
-    List<double> zValues = List<double>.filled(xyz.length ~/ 3, 0);
-
+    int centerX = width ~/ 2;
+    int centerY = height ~/ 2;
+    double centerZ = double.nan;
     // One pass to gather z values and find min and max for x, y, z
     for (int i = 0; i < xyz.length; i += 3) {
       double z = xyz[i + 2];
       double x = xyz[i];
       double y = xyz[i + 1];
-      zValues[i ~/ 3] = z;
       maxX = x > maxX ? x : maxX;
       minX = x < minX ? x : minX;
       maxY = y > maxY ? y : maxY;
       minY = y < minY ? y : minY;
       maxDepth = z > maxDepth ? z : maxDepth;
       minDepth = z < minDepth ? z : minDepth;
+      if (x == centerX && y == centerY) {
+        centerZ = z;
+      }
     }
 
-    // The method first checks if optional parameters discardBelow or discardAbove are provided.
-    // If either of them is not provided, the method calculates them.
-    // Calculation involves statistical methods - quartiles and interquartile range.
-
-    // First, the depth values are sorted in increasing order.
-
-    // Quartiles divide a rank-ordered data set into four equal parts.
-    // Q1 (the first quartile) is the value below which 25% of the data falls.
-    // Q3 (the third quartile) is the value below which 75% of the data falls.
-    // These are calculated by finding the data at 25% and 75% positions in the sorted depth values array.
-
-    // The interquartile range (IQR) is a measure of where the “middle fifty” is in a data set.
-    // Where a range is a measure of where the values lie, the IQR is a measure of where the "middle 50%" is.
-    // It's calculated by subtracting Q1 from Q3 (Q3 - Q1).
-
-    // If discardBelow is not provided, it's calculated as Q1 minus 1.5 times the IQR (Q1 - 1.5 * IQR).
-    // If discardAbove is not provided, it's calculated as Q3 plus 1.5 times the IQR (Q3 + 1.5 * IQR).
-    // These values are commonly used in statistics to define outliers in the data. Here, they are used to discard
-    // depth values that are too far from the middle range of the depth values.
-    // Using these calculated values instead of the absolute min and max provides a better result for the depth image,
-    // as it's less influenced by potential noise in the data (extremely close or far depth values).
     if (discardBelow == null || discardAbove == null) {
-      zValues.sort();
-      double Q1 = zValues[(zValues.length * 0.25).round()];
-      double Q3 = zValues[(zValues.length * 0.75).round()];
+      assert(!centerZ.isNaN, "Center point not found");
+      double lowerBound = centerZ - (centerZ - minDepth) * 0.5;
+      double upperBound = centerZ + (maxDepth - centerZ) * 0.5;
 
-      // Calculate the interquartile range
-      double IQR = Q3 - Q1;
-
-      // Define the discard values based on the IQR if not provided
-      discardBelow ??= Q1 - 1.5 * IQR;
-      discardAbove ??= Q3 + 1.5 * IQR;
+      discardBelow = lowerBound;
+      discardAbove = upperBound;
     }
 
     assert(!discardAbove.isNaN && !discardBelow.isNaN,
