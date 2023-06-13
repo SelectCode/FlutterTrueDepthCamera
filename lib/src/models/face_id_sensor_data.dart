@@ -149,26 +149,45 @@ class FaceIdSensorData with _$FaceIdSensorData {
 
   const FaceIdSensorData._();
 
-  /// Converts the FaceIdSensorData's xyz values to a DepthImage.
+  /// Converts facial information into a 3D depth image.
   ///
-  /// [discardAbove] and [discardBelow] provide optional bounds to consider while calculating the depth values.
-  /// Any depth value above [discardAbove] or below [discardBelow] is ignored. If these parameters are null,
-  /// all depth values are considered.
+  /// This method works by taking data that represents facial points in a 3-dimensional space (x, y, and z values)
+  /// and converting it into a 2D image that visually represents the depth of each point. This can be useful for
+  /// tasks such as facial recognition or detection in photos and videos.
   ///
-  /// The method first finds the maximum and minimum depth (z) values within the valid range
-  /// (determined by [discardAbove] and [discardBelow]).
+  /// - [discardAbove] and [discardBelow] are boundaries which determine which depth values to consider.
+  /// If a depth value is higher than [discardAbove] or lower than [discardBelow], we ignore it.
+  /// If these parameters are not specified, all depth values are taken into account.
   ///
-  /// Then, it normalizes the depth values to grayscale values between 0 and 255.
-  /// Depth values closer to the minimum depth value are assigned to black (0),
-  /// and depth values closer to the maximum depth value are assigned to white (255).
+  /// Here's how it works:
   ///
-  /// The normalization formula used is ((z - minDepth) / (maxDepth - minDepth) * 255).
+  /// - First, the method finds the highest and lowest depth values (z values) within the specified range.
   ///
-  /// Finally, the method creates and returns a DepthImage with the grayscale values, the width and height of the image,
-  /// and the maximum and minimum depth values encountered in the valid range.
+  /// - Next, it turns the depth values into shades of gray, where 0 is black and 255 is white.
+  /// Points closer to the camera (lower depth values) are represented as black, and points farther away
+  /// from the camera (higher depth values) are represented as white.
   ///
-  /// Note: This method assumes that the Float64List xyz is arranged in a manner consistent with
-  /// the image's width and height, where every 3 elements represent the x, y and z coordinates of a point.
+  /// - The formula for turning depth values into grayscale values is ((z - minDepth) / (maxDepth - minDepth) * 255).
+  ///
+  /// - Finally, the method returns a DepthImage, which includes the grayscale values that represent the depths,
+  /// the image's width and height, and the highest and lowest depth values.
+  ///
+  /// Note: This method expects that the data in xyz is structured in a way where every set of 3 values represents
+  /// the x, y, and z coordinates of a point on the face. The order of these sets corresponds to the image's width and height.
+  ///
+  /// Example:
+  ///
+  /// Let's say we have a set of points representing a face in a 3D space: (1,1,1), (2,2,2), and (3,3,3).
+  /// We want to convert this into a 2D depth image. We'll call this method with our data:
+  ///
+  /// /// FaceIdSensorData data = new FaceIdSensorData(xyz: [1,1,1,2,2,2,3,3,3]); /// DepthImage depthImage = data.toDepthImage(); ///
+  ///
+  /// In this example, the blackest point in the resulting image will represent the point (1,1,1),
+  /// as it's the closest to the camera. The whitest point will represent (3,3,3),
+  /// as it's the farthest. The point (2,2,2) will be a shade of gray.
+  ///
+  /// The resulting DepthImage can be used to visualize the depth of the face in a 2D space,
+  /// which can be helpful for computer vision tasks like facial recognition or detection.
   DepthImage toDepthImage() {
     double maxDepth = double.negativeInfinity;
     double minDepth = double.infinity;
