@@ -204,7 +204,7 @@ class FaceIdSensorData with _$FaceIdSensorData {
       double z = xyz[i + 2];
       double x = xyz[i];
       double y = xyz[i + 1];
-      zValues.add(z);
+      zValues[i ~/ 3] = z;
       maxX = math.max(maxX, x);
       minX = math.min(minX, x);
       maxY = math.max(maxY, y);
