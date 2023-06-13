@@ -155,9 +155,10 @@ class FaceIdSensorData with _$FaceIdSensorData {
   /// and converting it into a 2D image that visually represents the depth of each point. This can be useful for
   /// tasks such as facial recognition or detection in photos and videos.
   ///
-  /// - [discardAbove] and [discardBelow] are boundaries which determine which depth values to consider.
-  /// If a depth value is higher than [discardAbove] or lower than [discardBelow], we ignore it.
-  /// If these parameters are not specified, all depth values are taken into account.
+  /// [discardBelow] and [discardAbove] are optional parameters that you can use to set boundaries for depth values manually.
+  /// If these parameters are provided, the method will use these values as the lower and upper bounds for depth consideration.
+  /// If a depth value is higher than [discardAbove] or lower than [discardBelow], it is ignored.
+  /// If these parameters are not provided, the method will calculate and use its own values for [discardBelow] and [discardAbove].
   ///
   /// Here's how it works:
   ///
@@ -188,7 +189,7 @@ class FaceIdSensorData with _$FaceIdSensorData {
   ///
   /// The resulting DepthImage can be used to visualize the depth of the face in a 2D space,
   /// which can be helpful for computer vision tasks like facial recognition or detection.
-  DepthImage toDepthImage() {
+  DepthImage toDepthImage({double? discardBelow, double? discardAbove}) {
     double maxDepth = double.negativeInfinity;
     double minDepth = double.infinity;
     double maxX = double.negativeInfinity;
@@ -212,17 +213,39 @@ class FaceIdSensorData with _$FaceIdSensorData {
       minDepth = math.min(minDepth, z);
     }
 
-    // Calculate the quartiles
-    zValues.sort();
-    double Q1 = zValues[(zValues.length * 0.25).round()];
-    double Q3 = zValues[(zValues.length * 0.75).round()];
+    // The method first checks if optional parameters discardBelow or discardAbove are provided.
+    // If either of them is not provided, the method calculates them.
+    // Calculation involves statistical methods - quartiles and interquartile range.
 
-    // Calculate the interquartile range
-    double IQR = Q3 - Q1;
+    // First, the depth values are sorted in increasing order.
 
-    // Define the discard values based on the IQR
-    double discardBelow = Q1 - 1.5 * IQR;
-    double discardAbove = Q3 + 1.5 * IQR;
+    // Quartiles divide a rank-ordered data set into four equal parts.
+    // Q1 (the first quartile) is the value below which 25% of the data falls.
+    // Q3 (the third quartile) is the value below which 75% of the data falls.
+    // These are calculated by finding the data at 25% and 75% positions in the sorted depth values array.
+
+    // The interquartile range (IQR) is a measure of where the “middle fifty” is in a data set.
+    // Where a range is a measure of where the values lie, the IQR is a measure of where the "middle 50%" is.
+    // It's calculated by subtracting Q1 from Q3 (Q3 - Q1).
+
+    // If discardBelow is not provided, it's calculated as Q1 minus 1.5 times the IQR (Q1 - 1.5 * IQR).
+    // If discardAbove is not provided, it's calculated as Q3 plus 1.5 times the IQR (Q3 + 1.5 * IQR).
+    // These values are commonly used in statistics to define outliers in the data. Here, they are used to discard
+    // depth values that are too far from the middle range of the depth values.
+    // Using these calculated values instead of the absolute min and max provides a better result for the depth image,
+    // as it's less influenced by potential noise in the data (extremely close or far depth values).
+    if (discardBelow == null || discardAbove == null) {
+      zValues.sort();
+      double Q1 = zValues[(zValues.length * 0.25).round()];
+      double Q3 = zValues[(zValues.length * 0.75).round()];
+
+      // Calculate the interquartile range
+      double IQR = Q3 - Q1;
+
+      // Define the discard values based on the IQR if not provided
+      discardBelow ??= Q1 - 1.5 * IQR;
+      discardAbove ??= Q3 + 1.5 * IQR;
+    }
 
     // Filter outliers from min and max depths
     minDepth = math.max(minDepth, discardBelow);
