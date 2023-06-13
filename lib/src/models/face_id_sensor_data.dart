@@ -276,40 +276,6 @@ class FaceIdSensorData with _$FaceIdSensorData {
     );
   }
 
-  double _quickselect(List<double> list, int n) {
-    // Note: This function will modify the original list
-    int from = 0;
-    int to = list.length - 1;
-
-    while (from < to) {
-      int r = from, w = to;
-      double mid = list[(r + w) >> 1];
-
-      while (r < w) {
-        if (list[r] >= mid) {
-          double t = list[w];
-          list[w] = list[r];
-          list[r] = t;
-          --w;
-        } else {
-          ++r;
-        }
-      }
-
-      if (list[r] > mid) {
-        --r;
-      }
-
-      if (n <= r) {
-        to = r;
-      } else {
-        from = r + 1;
-      }
-    }
-
-    return list[n];
-  }
-
   List<(double, double, double)> getXYZNoIntrinsics() {
     return depthValues.mapIndexed((offset, z) {
       final x = offset % width;
