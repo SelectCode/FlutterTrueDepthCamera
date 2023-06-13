@@ -223,8 +223,8 @@ class FaceIdSensorData with _$FaceIdSensorData {
       double lowerBound = centerZ - (centerZ - minDepth) * 0.5;
       double upperBound = centerZ + 0.05;
 
-      discardBelow = lowerBound;
-      discardAbove = upperBound;
+      discardBelow ??= lowerBound;
+      discardAbove ??= upperBound;
     }
 
     assert(!discardAbove.isNaN && !discardBelow.isNaN,
