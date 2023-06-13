@@ -227,19 +227,27 @@ class FaceIdSensorData with _$FaceIdSensorData {
       discardAbove ??= upperBound;
     }
 
-    assert(!discardAbove.isNaN && !discardBelow.isNaN,
-        "discardAbove and discardBelow must be numbers");
-    assert(discardAbove >= discardBelow,
-        "discardAbove must be greater than or equal to discardBelow");
+    assert(
+      !discardAbove.isNaN && !discardBelow.isNaN,
+      "discardAbove $discardAbove and discardBelow $discardBelow must be numbers",
+    );
+    assert(
+      discardAbove > discardBelow,
+      "discardAbove $discardAbove must be greater than discardBelow $discardBelow",
+    );
 
     // Filter outliers from min and max depths
     minDepth = math.max(minDepth, discardBelow);
     maxDepth = math.min(maxDepth, discardAbove);
 
-    assert(minDepth <= maxDepth,
-        "minDepth must be less than or equal to maxDepth");
-    assert(!minDepth.isNaN && !maxDepth.isNaN,
-        "minDepth and maxDepth must be numbers");
+    assert(
+      maxDepth > minDepth,
+      "maxDepth $maxDepth must be greater than minDepth $minDepth",
+    );
+    assert(
+      !minDepth.isNaN && !maxDepth.isNaN,
+      "minDepth and maxDepth must be numbers",
+    );
 
     // Normalize depth (z) values between 0 and 255
     final normalizedDepthValues =
