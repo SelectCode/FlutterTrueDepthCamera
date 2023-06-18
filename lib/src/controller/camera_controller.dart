@@ -1,3 +1,4 @@
+import 'package:cv_camera/src/models/object_detection_options.dart';
 import 'package:flutter/material.dart';
 
 import '../models/calibration_data/calibration_data.dart';
@@ -17,7 +18,7 @@ abstract class CameraController {
   /// Returns a [TakePictureResult].
   ///
   /// [FaceIdSensorData] is null when device does not have a face id sensor or [lensDirection] is not [LensDirection.front].
-  Future<TakePictureResult> takePicture();
+  Future<TakePictureResult> takePicture({bool saveImage = false});
 
   /// Disposes all needed resources of the [CameraController].
   ///
@@ -38,6 +39,8 @@ abstract class CameraController {
   /// Determines which lens the camera uses.
   LensDirection get lensDirection;
 
+  ObjectDetectionOptions get objectDetectionOptions;
+
   /// Gets the calibration data of the current camera.
   Future<CvCameraCalibrationData> getCalibrationData();
 
@@ -46,9 +49,9 @@ abstract class CameraController {
 
   Future<List<double>> getDepthValues();
 
-  Future<Stream<bool>> startObjectDetectionStream();
+  Future<Stream<double>> startObjectCoverageStream();
 
-  Future<void> stopObjectDetectionStream();
+  Future<void> stopObjectCoverageStream();
 
   Future<void> setLensDirection(LensDirection lensDirection);
 

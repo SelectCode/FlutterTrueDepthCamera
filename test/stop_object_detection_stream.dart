@@ -26,21 +26,21 @@ main() {
     });
 
     test('should invoke stopObjectDetection', () async {
-      await sut.startObjectDetectionStream();
-      await sut.stopObjectDetectionStream();
+      await sut.startObjectCoverageStream();
+      await sut.stopObjectCoverageStream();
       expect(tracker.calls[1].method, 'stopObjectDetection');
     });
 
     test('should do nothing when ObjectDetection stream is not running',
         () async {
-      await sut.stopObjectDetectionStream();
+      await sut.stopObjectCoverageStream();
       expect(tracker.calls.length, 0);
     });
 
     test('should do nothing if stream is stopped twice', () async {
-      await sut.startObjectDetectionStream();
-      await sut.stopObjectDetectionStream();
-      await sut.stopObjectDetectionStream();
+      await sut.startObjectCoverageStream();
+      await sut.stopObjectCoverageStream();
+      await sut.stopObjectCoverageStream();
       expect(tracker.calls.length, 2);
     });
   });

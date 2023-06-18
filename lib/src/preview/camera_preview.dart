@@ -31,6 +31,8 @@ class _CameraPreviewState extends State<CameraPreview> {
       "lensDirection": widget.controller.lensDirection.value,
       "enableDistortionCorrection":
           widget.controller.enableDistortionCorrection,
+      "objectDetectionOptions":
+          widget.controller.objectDetectionOptions.toJson(),
     };
 
     return Stack(

@@ -2,16 +2,14 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:clock/clock.dart';
-import 'package:cv_camera/src/controller/camera_controller.dart';
 import 'package:cv_camera/src/misc/pitch/pitch.dart';
-import 'package:cv_camera/src/utils/image_builder.dart';
+import 'package:cv_camera/src/models/object_detection_options.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../cv_camera.dart';
-import '../models/models.dart';
 
 class CameraControllerImpl implements CameraController {
   @visibleForTesting
@@ -20,6 +18,9 @@ class CameraControllerImpl implements CameraController {
   final EventChannel objectDetectionEventChannel;
 
   LensDirection _lensDirection;
+
+  @override
+  final ObjectDetectionOptions objectDetectionOptions;
 
   @override
   final bool enableDistortionCorrection;
@@ -41,10 +42,21 @@ class CameraControllerImpl implements CameraController {
     required this.eventChannel,
     required this.methodChannel,
     required this.objectDetectionEventChannel,
+    ObjectDetectionOptions? objectDetectionOptions,
     this.enableDistortionCorrection = true,
     Clock? clock,
   })  : _lensDirection = lensDirection ?? LensDirection.front,
-        clock = clock ?? const Clock() {
+        clock = clock ?? const Clock(),
+        objectDetectionOptions = objectDetectionOptions ??
+            const ObjectDetectionOptions(
+              minDepth: 0.15,
+              maxDepth: 0.5,
+              centerWidthStart: 0.3,
+              centerWidthEnd: 0.7,
+              centerHeightStart: 0.3,
+              centerHeightEnd: 0.7,
+              minCoverage: 0.5,
+            ) {
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
         case "initDone":
@@ -204,7 +216,7 @@ class CameraControllerImpl implements CameraController {
   bool _isDetecting = false;
 
   @override
-  Future<Stream<bool>> startObjectDetectionStream() async {
+  Future<Stream<double>> startObjectCoverageStream() async {
     await readyCompleter.future;
 
     if (_isDetecting) {
@@ -214,13 +226,12 @@ class CameraControllerImpl implements CameraController {
     await methodChannel.invokeMethod("startObjectDetection");
     _isDetecting = true;
     return objectDetectionEventChannel.receiveBroadcastStream().map((event) {
-      final detected = event as bool;
-      return detected;
+      return event as double;
     });
   }
 
   @override
-  Future<void> stopObjectDetectionStream() async {
+  Future<void> stopObjectCoverageStream() async {
     await readyCompleter.future;
     if (!_isDetecting) return;
 

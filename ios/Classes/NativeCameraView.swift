@@ -30,7 +30,7 @@ class FLNativeViewFactory: NSObject, FlutterPlatformViewFactory {
         FLNativeView(
                 frame: frame,
                 viewIdentifier: viewId,
-                arguments: args as! [String: Any]?,
+                arguments: args as! [String: Any],
                 methodChannel: methodChannel, eventChannel: eventChannel, objectChangedEventChannel: objectChangedEventChannel
         )
     }
@@ -52,13 +52,12 @@ class FLNativeView: NSObject, FlutterPlatformView {
     private var objectChangedEventChannel: FlutterEventChannel!
     private let imageStreamHandler: ImageStreamHandler!
     private let onObjectDetectedChangedStreamHandler: ObjectDetectedChangedHandler!
-    private let enableDistortionCorrection: Bool!
 
     @available(iOS 11.1, *)
     init(
             frame: CGRect,
             viewIdentifier viewId: Int64,
-            arguments args: [String: Any]?,
+            arguments args: [String: Any],
             methodChannel: FlutterMethodChannel,
             eventChannel: FlutterEventChannel,
             objectChangedEventChannel: FlutterEventChannel
@@ -69,9 +68,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
         self.objectChangedEventChannel = objectChangedEventChannel
         imageStreamHandler = ImageStreamHandler()
         let cameraOptions = FLNativeView.parseCameraOptions(args: args)
-        let lensDirection: LensDirection = cameraOptions.lensDirection
-        self.enableDistortionCorrection = cameraOptions.enableDistortionCorrection
-        scannerController = ScannerController(lensDirection: lensDirection,enableDistortionCorrection: cameraOptions.enableDistortionCorrection)
+        scannerController = ScannerController(cameraOptions: cameraOptions)
         onObjectDetectedChangedStreamHandler = ObjectDetectedChangedHandler(scannerController: scannerController!)
         super.init()
 
@@ -122,7 +119,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
                         result(nil);
                     }
                 case "change_lens_direction":
-                    let lensDirection = FLNativeView.getLensDirection(args: call.arguments as? [String: Any])
+                    let lensDirection = FLNativeView.parseLensDirection(args: call.arguments as? [String: Any])
                     self.scannerController!.changeLensDirection(lensDirection)
                     result("")
                 default:
@@ -151,7 +148,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
 
     }
 
-    private static func getLensDirection(args: [String: Any]?) -> LensDirection {
+    private static func parseLensDirection(args: [String: Any]?) -> LensDirection {
         var lensDirection: LensDirection;
         switch (args!["lensDirection"] as! String) {
         case "front": lensDirection = .front
@@ -163,10 +160,35 @@ class FLNativeView: NSObject, FlutterPlatformView {
         return lensDirection;
     }
 
-    private static func parseCameraOptions(args: [String: Any]?) -> CameraOptions {
-        let lensDirection: LensDirection = FLNativeView.getLensDirection(args: args)
-        let enableDistortionCorrection: Bool = args!["enableDistortionCorrection"] as! Bool
-        return CameraOptions(lensDirection: lensDirection, enableDistortionCorrection: enableDistortionCorrection)
+    private static func parseObjectDetectionRange(args: [String: Any]) -> ObjectDetectionOptions {
+        let options: [String: Any] = args["objectDetectionOptions"] as! [String: Any];
+        let minDepth: Double = Double(truncating: options["minDepth"] as! NSNumber)
+        let maxDepth: Double = Double(truncating: options["maxDepth"] as! NSNumber)
+        let centerWidthStart: Double = Double(truncating: options["centerWidthStart"] as! NSNumber)
+        let centerWidthEnd: Double = Double(truncating: options["centerWidthEnd"] as! NSNumber)
+        let centerHeightStart: Double = Double(truncating: options["centerHeightStart"] as! NSNumber)
+        let centerHeightEnd: Double = Double(truncating: options["centerHeightEnd"] as! NSNumber)
+        let minCoverage: Double = Double(truncating: options["minCoverage"] as! NSNumber)
+        return ObjectDetectionOptions(
+                minDepth: minDepth,
+                maxDepth: maxDepth,
+                centerWidthStart: centerWidthStart,
+                centerWidthEnd: centerWidthEnd,
+                centerHeightStart: centerHeightStart,
+                centerHeightEnd: centerHeightEnd,
+                minCoverage: minCoverage
+        )
+    }
+
+    private static func parseCameraOptions(args: [String: Any]) -> CameraOptions {
+        let lensDirection: LensDirection = FLNativeView.parseLensDirection(args: args)
+        let enableDistortionCorrection: Bool = args["enableDistortionCorrection"] as! Bool
+        let objectDetectionRange = FLNativeView.parseObjectDetectionRange(args: args)
+        return CameraOptions(
+                lensDirection: lensDirection,
+                enableDistortionCorrection: enableDistortionCorrection,
+                objectDetectionOptions: objectDetectionRange
+        )
     }
 
     private func notifyAboutInitDone() {
@@ -287,7 +309,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
             return;
         }
 
-        scannerController?.setOnObjectDetectedChangedListener({ (detected) in
+        scannerController?.setOnObjectCoverageChangeListener({ (detected) in
             self.onObjectDetectedChangedStreamHandler.add(detected)
         })
     }
@@ -296,7 +318,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
         if (disposed) {
             return;
         }
-        scannerController?.removeOnObjectDetectedChangedListener()
+        scannerController?.removeOnObjectCoverageChangedListener()
     }
 
 
@@ -389,7 +411,7 @@ class ObjectDetectedChangedHandler: NSObject, FlutterStreamHandler {
         self.scannerController = scannerController
     }
 
-    func add(_ detected: Bool) {
+    func add(_ detected: Double) {
         eventSink?(detected)
     }
 
@@ -404,7 +426,7 @@ class ObjectDetectedChangedHandler: NSObject, FlutterStreamHandler {
     }
 
     func cancelListener() {
-        scannerController.removeOnObjectDetectedChangedListener()
+        scannerController.removeOnObjectCoverageChangedListener()
     }
 }
 

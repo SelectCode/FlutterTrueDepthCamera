@@ -36,36 +36,36 @@ main() {
     }
 
     test('should invoke startObjectDetection platform method', () async {
-      await sut.startObjectDetectionStream();
+      await sut.startObjectCoverageStream();
       expect(tracker.calls[0].method, 'startObjectDetection');
     });
 
     test('should only invoke startImageStream method', () async {
-      await sut.startObjectDetectionStream();
+      await sut.startObjectCoverageStream();
       expect(tracker.calls.length, 1);
     });
 
     test('should not pass any arguments', () async {
-      await sut.startObjectDetectionStream();
+      await sut.startObjectCoverageStream();
       expect(tracker.calls[0].arguments, null);
     });
 
     test('invoking startObjectDetection again should throw exception',
         () async {
-      await sut.startObjectDetectionStream();
-      expect(() => sut.startObjectDetectionStream(), throwsException);
+      await sut.startObjectCoverageStream();
+      expect(() => sut.startObjectCoverageStream(), throwsException);
     });
 
     test(
         'should return stream of bools when an object detection stream is running',
         () async {
-      final stream = await sut.startObjectDetectionStream();
+      final stream = await sut.startObjectCoverageStream();
       expect(stream, isA<Stream<bool>>());
     });
 
     test('returned stream should contain bools that are sent from platform',
         () async {
-      final stream = await sut.startObjectDetectionStream();
+      final stream = await sut.startObjectCoverageStream();
       final boo = [true, false, true, false, true, false, true, false, true];
       expectLater(stream, emitsInOrder(boo));
       for (var image in boo) {

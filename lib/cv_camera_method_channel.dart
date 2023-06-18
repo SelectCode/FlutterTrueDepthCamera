@@ -4,6 +4,7 @@ import 'package:cv_camera/src/models/lens_direction.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'cv_camera.dart';
 import 'cv_camera_platform_interface.dart';
 import 'src/controller/camera_controller_impl.dart';
 
@@ -23,6 +24,7 @@ class MethodChannelCvCamera extends CvCameraPlatform {
   CameraController getCameraController({
     LensDirection? lensDirection,
     bool? enableDistortionCorrection,
+    ObjectDetectionOptions? objectDetectionOptions,
     Clock? clock,
   }) {
     return CameraControllerImpl(
@@ -32,6 +34,7 @@ class MethodChannelCvCamera extends CvCameraPlatform {
       objectDetectionEventChannel: objectDetectionEventChannel,
       clock: clock,
       enableDistortionCorrection: enableDistortionCorrection ?? true,
+      objectDetectionOptions: objectDetectionOptions,
     );
   }
 }

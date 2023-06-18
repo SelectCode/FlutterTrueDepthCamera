@@ -32,14 +32,14 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     private var videoDeviceInput: AVCaptureDeviceInput!
     private var videoDeviceDiscoverySession: AVCaptureDevice.DiscoverySession!
     public var canUseDepthCamera: Bool!
-    private let enableDistortionCorrection: Bool!
+    private let cameraOptions: CameraOptions!
 
     @available(iOS 11.1, *)
-    init(lensDirection: LensDirection, enableDistortionCorrection: Bool) {
-        self.enableDistortionCorrection = enableDistortionCorrection
+    init(cameraOptions: CameraOptions!) {
+        self.cameraOptions = cameraOptions
 
         super.init();
-        self.setDeviceDiscoverySession(lensDirection: lensDirection)
+        self.setDeviceDiscoverySession(lensDirection: cameraOptions.lensDirection)
 
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(handleNotification(_:)), name: .AVCaptureSessionRuntimeError, object: session)
@@ -110,8 +110,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     private var calibrationCallback: ((AVCameraCalibrationData) -> Void)?
     private var faceIdSensorDataCallback: ((FaceIdData) -> Void)?
     private var depthValuesCallback: (([Float32]) -> Void)?
-    private var onObjectDetectedChanged: ((Bool) -> Void)?
-    private var lastDetected: Bool = false
+    private var onObjectCoverageChange: ((Double) -> Void)?
 
 
     func getCalibrationData(_ callback: @escaping (AVCameraCalibrationData) -> Void) {
@@ -133,12 +132,12 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
         snapshotCallback = callback
     }
 
-    func setOnObjectDetectedChangedListener(_ callback: @escaping (Bool) -> Void) {
-        onObjectDetectedChanged = callback
+    func setOnObjectCoverageChangeListener(_ callback: @escaping (Double) -> Void) {
+        onObjectCoverageChange = callback
     }
 
-    func removeOnObjectDetectedChangedListener() {
-        onObjectDetectedChanged = nil
+    func removeOnObjectCoverageChangedListener() {
+        onObjectCoverageChange = nil
     }
 
 
@@ -264,17 +263,12 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             }
 
 
-            if (self.onObjectDetectedChanged != nil) {
+            if (self.onObjectCoverageChange != nil) {
                 self.objectDetectionQueue.async {
                     let width = CVPixelBufferGetWidth(videoPixelBuffer)
                     let height = CVPixelBufferGetHeight(videoPixelBuffer)
-                    let hasDetected = self.checkForObject(depthValues: depthValues, width: width, height: height)
-                    if (self.lastDetected != hasDetected) {
-                        if (self.onObjectDetectedChanged != nil) {
-                            self.onObjectDetectedChanged!(hasDetected)
-                        }
-                        self.lastDetected = hasDetected
-                    }
+                    let coverage = self.checkForObject(depthValues: depthValues, width: width, height: height)
+                    self.onObjectCoverageChange!(coverage)
                 }
             }
 
@@ -310,11 +304,12 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
     }
 
-    func checkForObject(depthValues: [Float32], width: Int, height: Int) -> Bool {
-        let centerWidthRange = Int(Double(width) * 0.3)...Int(Double(width) * 0.7)
-        let centerHeightRange = Int(Double(height) * 0.3)...Int(Double(height) * 0.7)
+    func checkForObject(depthValues: [Float32], width: Int, height: Int) -> Double {
+        let detectionOptions = cameraOptions.objectDetectionOptions
+        let centerWidthRange = Int(Double(width) * detectionOptions.centerHeightStart)...Int(Double(width) * detectionOptions.centerWidthEnd)
+        let centerHeightRange = Int(Double(height) * detectionOptions.centerHeightStart)...Int(Double(height) * detectionOptions.centerHeightEnd)
         let centerCount = (centerWidthRange.upperBound - centerWidthRange.lowerBound) * (centerHeightRange.upperBound - centerHeightRange.lowerBound)
-        let depthRange = 0.15...0.3
+        let depthRange = detectionOptions.minDepth...detectionOptions.maxDepth
         var xsCount = 0
 
         for (i, value) in depthValues.enumerated() {
@@ -325,11 +320,10 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             }
         }
 
+        print("xsCount: \(xsCount), centerCount: \(centerCount)")
         let coverage = Double(xsCount) / Double(centerCount)
 
-        let minCoverage = coverage > 0.5
-
-        return minCoverage
+        return coverage
     }
 
 
@@ -366,7 +360,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
 
         var undistortedBuffer: CVPixelBuffer? = nil
-        if (enableDistortionCorrection) {
+        if (cameraOptions.enableDistortionCorrection) {
             undistortedBuffer = undistortDepthValues(depthPixelBuffer: depthPixelBuffer, depthData: depthData, depthWidth: depthWidth, depthHeight: depthHeight)
         }
 

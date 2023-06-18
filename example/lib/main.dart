@@ -27,8 +27,18 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _controller =
-        CvCamera.getCameraController(enableDistortionCorrection: false);
+    _controller = CvCamera.getCameraController(
+      enableDistortionCorrection: false,
+      objectDetectionOptions: const ObjectDetectionOptions(
+        minDepth: 0.21,
+        maxDepth: 0.45,
+        centerWidthStart: 0.3,
+        centerWidthEnd: 0.7,
+        centerHeightStart: 0.2,
+        centerHeightEnd: 0.8,
+        minCoverage: 0.5,
+      ),
+    );
     _shootEffectController = CameraShootEffectController();
     setUpStream();
   }
@@ -99,7 +109,8 @@ class _MyAppState extends State<MyApp> {
                       icon: const Icon(Icons.camera),
                       onPressed: () async {
                         _shootEffectController.play();
-                        final result = await _controller.takePicture();
+                        final result =
+                            await _controller.takePicture(saveImage: true);
                         await shareFaceIdData(result, context);
                         var notZeroCount = 0;
                         var depthValues = result.faceIdSensorData!.depthValues;
@@ -114,7 +125,7 @@ class _MyAppState extends State<MyApp> {
                           context: context,
                           builder: (context) => SizedBox(
                             height: MediaQuery.of(context).size.height * 0.7,
-                            child: Image.file(File(result.path)),
+                            child: Image.file(File(result.path!)),
                           ),
                         );
                       },
@@ -154,6 +165,40 @@ class _MyAppState extends State<MyApp> {
                       CameraPreview(
                         shootEffectController: _shootEffectController,
                         controller: _controller,
+                        child: Positioned.fill(child:
+                            LayoutBuilder(builder: (context, constraints) {
+                          final widthStart = constraints.maxWidth * 0.3;
+                          final widthEnd = constraints.maxWidth * 0.7;
+                          final heightStart = constraints.maxHeight * 0.2;
+                          final heightEnd = constraints.maxHeight * 0.8;
+
+                          return Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.red,
+                                width: 2,
+                              ),
+                            ),
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  left: widthStart,
+                                  top: heightStart,
+                                  child: Container(
+                                    width: widthEnd - widthStart,
+                                    height: heightEnd - heightStart,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.red,
+                                        width: 2,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        })),
                       ),
                       Center(
                         child: ObjectDetectionDisplay(
@@ -183,7 +228,9 @@ class ObjectDetectionDisplay extends StatefulWidget {
 }
 
 class _ObjectDetectionDisplayState extends State<ObjectDetectionDisplay> {
-  late StreamSubscription<bool> _sensorStream;
+  late StreamSubscription<double> _sensorStream;
+
+  String objectDetectionState = 'Not Detecting Object';
 
   @override
   void initState() {
@@ -192,10 +239,16 @@ class _ObjectDetectionDisplayState extends State<ObjectDetectionDisplay> {
   }
 
   Future<void> _initStream() async {
-    _sensorStream = (await widget.controller.startObjectDetectionStream())
-        .listen((isDetecting) {
+    _sensorStream = (await widget.controller.startObjectCoverageStream())
+        .listen((coverage) {
       setState(() {
-        isDetectingObject = isDetecting;
+        if (coverage > 0.5) {
+          objectDetectionState = 'Detecting Hand';
+        } else if (coverage > 0.1) {
+          objectDetectionState = 'Hand too far away/not centered';
+        } else {
+          objectDetectionState = 'Not Detecting Hand';
+        }
       });
     });
   }
@@ -206,12 +259,10 @@ class _ObjectDetectionDisplayState extends State<ObjectDetectionDisplay> {
     super.dispose();
   }
 
-  bool isDetectingObject = false;
-
   @override
   Widget build(BuildContext context) {
-    return isDetectingObject
-        ? const Text('Detecting Object')
-        : const Text('Not Detecting Object');
+    return Center(
+      child: Text(objectDetectionState),
+    );
   }
 }

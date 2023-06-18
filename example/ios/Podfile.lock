@@ -5,6 +5,8 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - sensors_plus (0.0.1):
+    - Flutter
   - share_extend (0.0.1):
     - Flutter
 
@@ -12,6 +14,7 @@ DEPENDENCIES:
   - cv_camera (from `.symlinks/plugins/cv_camera/ios`)
   - Flutter (from `Flutter`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
+  - sensors_plus (from `.symlinks/plugins/sensors_plus/ios`)
   - share_extend (from `.symlinks/plugins/share_extend/ios`)
 
 EXTERNAL SOURCES:
@@ -21,6 +24,8 @@ EXTERNAL SOURCES:
     :path: Flutter
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
+  sensors_plus:
+    :path: ".symlinks/plugins/sensors_plus/ios"
   share_extend:
     :path: ".symlinks/plugins/share_extend/ios"
 
@@ -28,6 +33,7 @@ SPEC CHECKSUMS:
   cv_camera: 54081890c9fccee6cd59525ba108d8ad8b84594d
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   path_provider_foundation: eaf5b3e458fc0e5fbb9940fb09980e853fe058b8
+  sensors_plus: bda64198ccc7d3ccbb49e6ae17d92f67687bee20
   share_extend: b6748dc53695587891126a89533b862b92548c7b
 
 PODFILE CHECKSUM: ef19549a9bc3046e7bb7d2fab4d021637c0c58a3
