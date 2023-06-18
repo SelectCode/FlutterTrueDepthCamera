@@ -322,7 +322,6 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             }
         }
 
-        print("xsCount: \(xsCount), centerCount: \(centerCount)")
         let coverage = Double(xsCount) / Double(centerCount)
 
         return coverage
