@@ -268,7 +268,9 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
                     let width = CVPixelBufferGetWidth(videoPixelBuffer)
                     let height = CVPixelBufferGetHeight(videoPixelBuffer)
                     let coverage = self.checkForObject(depthValues: depthValues, width: width, height: height)
-                    self.onObjectCoverageChange!(coverage)
+                    if (self.onObjectCoverageChange != nil) {
+                        self.onObjectCoverageChange!(coverage)
+                    }
                 }
             }
 
