@@ -338,6 +338,9 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
                     result.insideBound += 1;
                 }
             } else {
+                if(!depthRange.contains(value)) {
+                    continue;
+                }
                 if (x < widthRange.lowerBound) {
                     result.leftOfBound += 1;
                 } else if (x > widthRange.upperBound) {
