@@ -228,7 +228,7 @@ class ObjectDetectionDisplay extends StatefulWidget {
 }
 
 class _ObjectDetectionDisplayState extends State<ObjectDetectionDisplay> {
-  late StreamSubscription<double> _sensorStream;
+  late StreamSubscription _sensorStream;
 
   String objectDetectionState = 'Not Detecting Object';
 
@@ -239,8 +239,10 @@ class _ObjectDetectionDisplayState extends State<ObjectDetectionDisplay> {
   }
 
   Future<void> _initStream() async {
-    _sensorStream = (await widget.controller.startObjectCoverageStream())
-        .listen((coverage) {
+    _sensorStream =
+        (await widget.controller.startObjectCoverageStream()).listen((result) {
+      final coverage =
+          result.insideBound.toDouble() / result.boundPointCount.toDouble();
       setState(() {
         if (coverage > 0.5) {
           objectDetectionState = 'Detecting Hand';

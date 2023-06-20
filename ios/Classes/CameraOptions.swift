@@ -13,3 +13,15 @@ struct ObjectDetectionOptions {
     let centerHeightEnd: Double;
     let minCoverage: Double;
 }
+
+struct ObjectDetectionResult {
+
+    var belowLowerBound: Int;
+    var aboveUpperBound: Int;
+    var leftOfBound: Int;
+    var rightOfBound: Int;
+    var aboveBound: Int;
+    var belowBound: Int;
+    var insideBound: Int;
+    let boundPointCount: Int;
+}

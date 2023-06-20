@@ -1,4 +1,5 @@
 import 'package:cv_camera/src/models/object_detection_options.dart';
+import 'package:cv_camera/src/models/object_detection_result.dart';
 import 'package:flutter/material.dart';
 
 import '../models/calibration_data/calibration_data.dart';
@@ -49,7 +50,7 @@ abstract class CameraController {
 
   Future<List<double>> getDepthValues();
 
-  Future<Stream<double>> startObjectCoverageStream();
+  Future<Stream<ObjectDetectionResult>> startObjectCoverageStream();
 
   Future<void> stopObjectCoverageStream();
 

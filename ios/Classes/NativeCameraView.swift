@@ -418,8 +418,18 @@ class ObjectDetectedChangedHandler: NSObject, FlutterStreamHandler {
         self.scannerController = scannerController
     }
 
-    func add(_ detected: Double) {
-        eventSink?(detected)
+    func add(_ detected: ObjectDetectionResult) {
+        let encoded: Dictionary<String, NSInteger> = [
+            "belowLowerBound": NSInteger(detected.belowLowerBound),
+            "aboveUpperBound": NSInteger(detected.aboveUpperBound),
+            "leftOfBound": NSInteger(detected.leftOfBound),
+            "rightOfBound": NSInteger(detected.rightOfBound),
+            "aboveBound": NSInteger(detected.aboveBound),
+            "belowBound": NSInteger(detected.belowBound),
+            "insideBound": NSInteger(detected.insideBound),
+            "boundPointCount": NSInteger(detected.boundPointCount),
+        ]
+        eventSink?(encoded)
     }
 
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {

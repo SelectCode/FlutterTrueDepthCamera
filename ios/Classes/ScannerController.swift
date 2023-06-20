@@ -110,7 +110,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     private var calibrationCallback: ((AVCameraCalibrationData) -> Void)?
     private var faceIdSensorDataCallback: ((FaceIdData) -> Void)?
     private var depthValuesCallback: (([Float32]) -> Void)?
-    private var onObjectCoverageChange: ((Double) -> Void)?
+    private var onObjectCoverageChange: ((ObjectDetectionResult) -> Void)?
 
 
     func getCalibrationData(_ callback: @escaping (AVCameraCalibrationData) -> Void) {
@@ -132,7 +132,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
         snapshotCallback = callback
     }
 
-    func setOnObjectCoverageChangeListener(_ callback: @escaping (Double) -> Void) {
+    func setOnObjectCoverageChangeListener(_ callback: @escaping (ObjectDetectionResult) -> Void) {
         onObjectCoverageChange = callback
     }
 
@@ -267,9 +267,9 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
                 self.objectDetectionQueue.async {
                     let width = CVPixelBufferGetWidth(videoPixelBuffer)
                     let height = CVPixelBufferGetHeight(videoPixelBuffer)
-                    let coverage = self.checkForObject(depthValues: depthValues, width: width, height: height)
+                    let result = self.checkForObject(depthValues: depthValues, width: width, height: height)
                     if (self.onObjectCoverageChange != nil) {
-                        self.onObjectCoverageChange!(coverage)
+                        self.onObjectCoverageChange!(result)
                     }
                 }
             }
@@ -306,25 +306,50 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
     }
 
-    func checkForObject(depthValues: [Float32], width: Int, height: Int) -> Double {
+    func checkForObject(depthValues: [Float32], width: Int, height: Int) -> ObjectDetectionResult {
         let detectionOptions = cameraOptions.objectDetectionOptions
-        let centerWidthRange = Int(Double(width) * detectionOptions.centerHeightStart)...Int(Double(width) * detectionOptions.centerWidthEnd)
-        let centerHeightRange = Int(Double(height) * detectionOptions.centerHeightStart)...Int(Double(height) * detectionOptions.centerHeightEnd)
-        let centerCount = (centerWidthRange.upperBound - centerWidthRange.lowerBound) * (centerHeightRange.upperBound - centerHeightRange.lowerBound)
+        let widthRange = Int(Double(width) * detectionOptions.centerHeightStart)...Int(Double(width) * detectionOptions.centerWidthEnd)
+        let heighRange = Int(Double(height) * detectionOptions.centerHeightStart)...Int(Double(height) * detectionOptions.centerHeightEnd)
+        let centerCount = (widthRange.upperBound - widthRange.lowerBound) * (heighRange.upperBound - heighRange.lowerBound)
         let depthRange = detectionOptions.minDepth...detectionOptions.maxDepth
-        var xsCount = 0
+        var result = ObjectDetectionResult(
+                belowLowerBound: 0,
+                aboveUpperBound: 0,
+                leftOfBound: 0,
+                rightOfBound: 0,
+                aboveBound: 0,
+                belowBound: 0,
+                insideBound: 0,
+                boundPointCount: centerCount
+        );
 
-        for (i, value) in depthValues.enumerated() {
+
+        for (i, raw) in depthValues.enumerated() {
             let x = i % width
             let y = i / width
-            if depthRange.contains(Double(value)) && centerWidthRange.contains(x) && centerHeightRange.contains(y) {
-                xsCount += 1
+            let value = Double(raw);
+            if (widthRange.contains(x) && heighRange.contains(y)) {
+                if (value < depthRange.lowerBound) {
+                    result.belowLowerBound += 1;
+                } else if (value > depthRange.upperBound) {
+                    result.aboveUpperBound += 1;
+                } else {
+                    result.insideBound += 1;
+                }
+            } else {
+                if (x < widthRange.lowerBound) {
+                    result.leftOfBound += 1;
+                } else if (x > widthRange.upperBound) {
+                    result.rightOfBound += 1;
+                } else if (y < heighRange.lowerBound) {
+                    result.belowBound += 1;
+                } else if (y > heighRange.upperBound) {
+                    result.aboveBound += 1;
+                }
             }
         }
 
-        let coverage = Double(xsCount) / Double(centerCount)
-
-        return coverage
+        return result;
     }
 
 

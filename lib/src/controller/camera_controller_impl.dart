@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:clock/clock.dart';
 import 'package:cv_camera/src/misc/pitch/pitch.dart';
-import 'package:cv_camera/src/models/object_detection_options.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
@@ -216,7 +215,7 @@ class CameraControllerImpl implements CameraController {
   bool _isDetecting = false;
 
   @override
-  Future<Stream<double>> startObjectCoverageStream() async {
+  Future<Stream<ObjectDetectionResult>> startObjectCoverageStream() async {
     await readyCompleter.future;
 
     if (_isDetecting) {
@@ -226,7 +225,7 @@ class CameraControllerImpl implements CameraController {
     await methodChannel.invokeMethod("startObjectDetection");
     _isDetecting = true;
     return objectDetectionEventChannel.receiveBroadcastStream().map((event) {
-      return event as double;
+      return ObjectDetectionResult.fromJson(Map<String, dynamic>.from(event));
     });
   }
 
