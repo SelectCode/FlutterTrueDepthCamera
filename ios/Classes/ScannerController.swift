@@ -309,8 +309,8 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     func checkForObject(depthValues: [Float32], width: Int, height: Int) -> ObjectDetectionResult {
         let detectionOptions = cameraOptions.objectDetectionOptions
         let widthRange = Int(Double(width) * detectionOptions.centerHeightStart)...Int(Double(width) * detectionOptions.centerWidthEnd)
-        let heighRange = Int(Double(height) * detectionOptions.centerHeightStart)...Int(Double(height) * detectionOptions.centerHeightEnd)
-        let centerCount = (widthRange.upperBound - widthRange.lowerBound) * (heighRange.upperBound - heighRange.lowerBound)
+        let heightRange = Int(Double(height) * detectionOptions.centerHeightStart)...Int(Double(height) * detectionOptions.centerHeightEnd)
+        let centerCount = (widthRange.upperBound - widthRange.lowerBound) * (heightRange.upperBound - heightRange.lowerBound)
         let depthRange = detectionOptions.minDepth...detectionOptions.maxDepth
         var result = ObjectDetectionResult(
                 belowLowerBound: 0,
@@ -328,24 +328,24 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             let x = i % width
             let y = i / width
             let value = Double(raw);
-            if (widthRange.contains(x) && heighRange.contains(y)) {
-                if (value < depthRange.lowerBound) {
-                    result.belowLowerBound += 1;
-                } else if (value > depthRange.upperBound) {
-                    result.aboveUpperBound += 1;
-                } else {
+            if (value < depthRange.lowerBound) {
+                result.belowLowerBound += 1;
+            } else if (value > depthRange.upperBound) {
+                result.aboveUpperBound += 1;
+            } else {
+                if (widthRange.contains(x) && heightRange.contains(y)) {
                     result.insideBound += 1;
                 }
-            } else {
-                if (x < widthRange.lowerBound) {
-                    result.leftOfBound += 1;
-                } else if (x > widthRange.upperBound) {
-                    result.rightOfBound += 1;
-                } else if (y < heighRange.lowerBound) {
-                    result.belowBound += 1;
-                } else if (y > heighRange.upperBound) {
-                    result.aboveBound += 1;
-                }
+            }
+            if (x < widthRange.lowerBound) {
+                result.leftOfBound += 1;
+            } else if (x > widthRange.upperBound) {
+                result.rightOfBound += 1;
+            }
+            if (y < heightRange.lowerBound) {
+                result.belowBound += 1;
+            } else if (y > heightRange.upperBound) {
+                result.aboveBound += 1;
             }
         }
 

@@ -1,6 +1,6 @@
 name: cv_camera
 description: A camera designed specifically for usage with computer vision.
-version: 0.0.1+6
+version: 0.0.1+7
 homepage: https://selectcode.de
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
