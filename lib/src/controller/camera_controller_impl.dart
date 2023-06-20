@@ -136,7 +136,7 @@ class CameraControllerImpl implements CameraController {
     final bytes = imageBuilder.asJpg();
     final writtenFile = (await imageFile.writeAsBytes(bytes));
     final path = writtenFile.path;
-
+    print(response['depthData'].runtimeType);
     final decoded =
         TakePictureResult.fromJson(response..addAll({'path': path}));
 

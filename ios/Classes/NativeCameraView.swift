@@ -253,14 +253,14 @@ class FLNativeView: NSObject, FlutterPlatformView {
             point
         }))
 
-        let encodedData = [
+        let encodedData: Dictionary<String, Any> = [
             "intrinsicMatrix": intrinsicMatrix,
             "intrinsicMatrixReferenceDimensions": intrinsicMatrixReferenceDimensions,
             "extrinsicMatrix": extrinsicMatrix,
             "pixelSize": pixelSize,
             "lensDistortionLookupTable": lensDistortionLookupTable,
             "lensDistortionCenter": lensDistortionCenter
-        ] as [String: Any]
+        ]
         return encodedData
     }
 
@@ -353,7 +353,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
                     $0.bytes
                 }
         ))
-        let calibrationData = self.encodeCameraCalibrationData(data: data.cameraCalibrationData)
+        let calibrationData = encodeCameraCalibrationData(data: data.cameraCalibrationData)
         return [
             "width": width,
             "height": height,

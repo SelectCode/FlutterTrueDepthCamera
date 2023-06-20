@@ -282,7 +282,12 @@ class FaceIdSensorData with _$FaceIdSensorData {
   }
 
   factory FaceIdSensorData.fromJson(Map<String, dynamic> json) =>
-      _$FaceIdSensorDataFromJson(json);
+      _$FaceIdSensorDataFromJson(json.map((key, value) {
+        if (value is Map) {
+          return MapEntry(key, Map<String, dynamic>.from(value));
+        }
+        return MapEntry(key, value);
+      }));
 
   @override
   Map<String, dynamic> toJson() => throw UnimplementedError();
