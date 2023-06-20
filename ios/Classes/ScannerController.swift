@@ -330,15 +330,18 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             let value = Double(raw);
 
             if (widthRange.contains(x) && heightRange.contains(y)) {
-                if (value < depthRange.lowerBound) {
-                    result.belowLowerBound += 1;
-                } else if (value > depthRange.upperBound) {
-                    result.aboveUpperBound += 1;
-                } else {
+                if (depthRange.contains(value)) {
                     result.insideBound += 1;
+                } else {
+                    if (value < depthRange.lowerBound) {
+                        result.belowLowerBound += 1;
+                    } else if (value > depthRange.upperBound && value < depthRange.upperBound * 1.5) {
+                        result.aboveUpperBound += 1;
+                    }
                 }
+
             } else {
-                if(!depthRange.contains(value)) {
+                if (!depthRange.contains(value)) {
                     continue;
                 }
                 if (x < widthRange.lowerBound) {
