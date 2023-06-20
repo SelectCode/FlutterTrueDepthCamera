@@ -252,6 +252,10 @@ class FLNativeView: NSObject, FlutterPlatformView {
         let lensDistortionLookupTable = FlutterStandardTypedData(bytes: Data(lensDistortionLookupTableData!.map { point in
             point
         }))
+        let inverseLensDistortionLookupTableData =
+                FlutterStandardTypedData(bytes: Data(calibrationData.inverseLensDistortionLookupTable!.map { point in
+                    point
+                }))
 
         let encodedData: Dictionary<String, Any> = [
             "intrinsicMatrix": intrinsicMatrix,
@@ -259,7 +263,8 @@ class FLNativeView: NSObject, FlutterPlatformView {
             "extrinsicMatrix": extrinsicMatrix,
             "pixelSize": pixelSize,
             "lensDistortionLookupTable": lensDistortionLookupTable,
-            "lensDistortionCenter": lensDistortionCenter
+            "lensDistortionCenter": lensDistortionCenter,
+            "inverseLensDistortionLookupTable": inverseLensDistortionLookupTableData
         ]
         return encodedData
     }

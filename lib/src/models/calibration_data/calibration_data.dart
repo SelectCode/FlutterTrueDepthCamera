@@ -20,14 +20,16 @@ class CvCameraCalibrationData with _$CvCameraCalibrationData {
 
   // ignore: invalid_annotation_target
   @JsonSerializable(explicitToJson: true, anyMap: true)
-  const factory CvCameraCalibrationData({
-    required double pixelSize,
-    required List<CGVector> intrinsicMatrix,
-    required List<CGVector> extrinsicMatrix,
-    required CGSize intrinsicMatrixReferenceDimensions,
-    @Float64ListConverter() required Float64List lensDistortionLookupTable,
-    required CGPoint lensDistortionCenter,
-  }) = _CvCameraCalibrationData;
+  const factory CvCameraCalibrationData(
+      {required double pixelSize,
+      required List<CGVector> intrinsicMatrix,
+      required List<CGVector> extrinsicMatrix,
+      required CGSize intrinsicMatrixReferenceDimensions,
+      @Float64ListConverter() required Float64List lensDistortionLookupTable,
+      required CGPoint lensDistortionCenter,
+      @Float64ListConverter()
+      required Float64List
+          inverseLensDistortionLookupTable}) = _CvCameraCalibrationData;
 
   const CvCameraCalibrationData._();
 

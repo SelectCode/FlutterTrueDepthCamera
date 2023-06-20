@@ -30,6 +30,9 @@ mixin _$CvCameraCalibrationData {
   Float64List get lensDistortionLookupTable =>
       throw _privateConstructorUsedError;
   CGPoint get lensDistortionCenter => throw _privateConstructorUsedError;
+  @Float64ListConverter()
+  Float64List get inverseLensDistortionLookupTable =>
+      throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -49,7 +52,8 @@ abstract class $CvCameraCalibrationDataCopyWith<$Res> {
       List<CGVector> extrinsicMatrix,
       CGSize intrinsicMatrixReferenceDimensions,
       @Float64ListConverter() Float64List lensDistortionLookupTable,
-      CGPoint lensDistortionCenter});
+      CGPoint lensDistortionCenter,
+      @Float64ListConverter() Float64List inverseLensDistortionLookupTable});
 
   $CGSizeCopyWith<$Res> get intrinsicMatrixReferenceDimensions;
   $CGPointCopyWith<$Res> get lensDistortionCenter;
@@ -75,6 +79,7 @@ class _$CvCameraCalibrationDataCopyWithImpl<$Res,
     Object? intrinsicMatrixReferenceDimensions = null,
     Object? lensDistortionLookupTable = null,
     Object? lensDistortionCenter = null,
+    Object? inverseLensDistortionLookupTable = null,
   }) {
     return _then(_value.copyWith(
       pixelSize: null == pixelSize
@@ -102,6 +107,10 @@ class _$CvCameraCalibrationDataCopyWithImpl<$Res,
           ? _value.lensDistortionCenter
           : lensDistortionCenter // ignore: cast_nullable_to_non_nullable
               as CGPoint,
+      inverseLensDistortionLookupTable: null == inverseLensDistortionLookupTable
+          ? _value.inverseLensDistortionLookupTable
+          : inverseLensDistortionLookupTable // ignore: cast_nullable_to_non_nullable
+              as Float64List,
     ) as $Val);
   }
 
@@ -138,7 +147,8 @@ abstract class _$$_CvCameraCalibrationDataCopyWith<$Res>
       List<CGVector> extrinsicMatrix,
       CGSize intrinsicMatrixReferenceDimensions,
       @Float64ListConverter() Float64List lensDistortionLookupTable,
-      CGPoint lensDistortionCenter});
+      CGPoint lensDistortionCenter,
+      @Float64ListConverter() Float64List inverseLensDistortionLookupTable});
 
   @override
   $CGSizeCopyWith<$Res> get intrinsicMatrixReferenceDimensions;
@@ -164,6 +174,7 @@ class __$$_CvCameraCalibrationDataCopyWithImpl<$Res>
     Object? intrinsicMatrixReferenceDimensions = null,
     Object? lensDistortionLookupTable = null,
     Object? lensDistortionCenter = null,
+    Object? inverseLensDistortionLookupTable = null,
   }) {
     return _then(_$_CvCameraCalibrationData(
       pixelSize: null == pixelSize
@@ -191,6 +202,10 @@ class __$$_CvCameraCalibrationDataCopyWithImpl<$Res>
           ? _value.lensDistortionCenter
           : lensDistortionCenter // ignore: cast_nullable_to_non_nullable
               as CGPoint,
+      inverseLensDistortionLookupTable: null == inverseLensDistortionLookupTable
+          ? _value.inverseLensDistortionLookupTable
+          : inverseLensDistortionLookupTable // ignore: cast_nullable_to_non_nullable
+              as Float64List,
     ));
   }
 }
@@ -205,7 +220,8 @@ class _$_CvCameraCalibrationData extends _CvCameraCalibrationData {
       required final List<CGVector> extrinsicMatrix,
       required this.intrinsicMatrixReferenceDimensions,
       @Float64ListConverter() required this.lensDistortionLookupTable,
-      required this.lensDistortionCenter})
+      required this.lensDistortionCenter,
+      @Float64ListConverter() required this.inverseLensDistortionLookupTable})
       : _intrinsicMatrix = intrinsicMatrix,
         _extrinsicMatrix = extrinsicMatrix,
         super._();
@@ -238,10 +254,13 @@ class _$_CvCameraCalibrationData extends _CvCameraCalibrationData {
   final Float64List lensDistortionLookupTable;
   @override
   final CGPoint lensDistortionCenter;
+  @override
+  @Float64ListConverter()
+  final Float64List inverseLensDistortionLookupTable;
 
   @override
   String toString() {
-    return 'CvCameraCalibrationData(pixelSize: $pixelSize, intrinsicMatrix: $intrinsicMatrix, extrinsicMatrix: $extrinsicMatrix, intrinsicMatrixReferenceDimensions: $intrinsicMatrixReferenceDimensions, lensDistortionLookupTable: $lensDistortionLookupTable, lensDistortionCenter: $lensDistortionCenter)';
+    return 'CvCameraCalibrationData(pixelSize: $pixelSize, intrinsicMatrix: $intrinsicMatrix, extrinsicMatrix: $extrinsicMatrix, intrinsicMatrixReferenceDimensions: $intrinsicMatrixReferenceDimensions, lensDistortionLookupTable: $lensDistortionLookupTable, lensDistortionCenter: $lensDistortionCenter, inverseLensDistortionLookupTable: $inverseLensDistortionLookupTable)';
   }
 
   @override
@@ -262,7 +281,10 @@ class _$_CvCameraCalibrationData extends _CvCameraCalibrationData {
             const DeepCollectionEquality().equals(
                 other.lensDistortionLookupTable, lensDistortionLookupTable) &&
             (identical(other.lensDistortionCenter, lensDistortionCenter) ||
-                other.lensDistortionCenter == lensDistortionCenter));
+                other.lensDistortionCenter == lensDistortionCenter) &&
+            const DeepCollectionEquality().equals(
+                other.inverseLensDistortionLookupTable,
+                inverseLensDistortionLookupTable));
   }
 
   @JsonKey(ignore: true)
@@ -274,7 +296,8 @@ class _$_CvCameraCalibrationData extends _CvCameraCalibrationData {
       const DeepCollectionEquality().hash(_extrinsicMatrix),
       intrinsicMatrixReferenceDimensions,
       const DeepCollectionEquality().hash(lensDistortionLookupTable),
-      lensDistortionCenter);
+      lensDistortionCenter,
+      const DeepCollectionEquality().hash(inverseLensDistortionLookupTable));
 
   @JsonKey(ignore: true)
   @override
@@ -300,7 +323,9 @@ abstract class _CvCameraCalibrationData extends CvCameraCalibrationData {
           required final CGSize intrinsicMatrixReferenceDimensions,
           @Float64ListConverter()
               required final Float64List lensDistortionLookupTable,
-          required final CGPoint lensDistortionCenter}) =
+          required final CGPoint lensDistortionCenter,
+          @Float64ListConverter()
+              required final Float64List inverseLensDistortionLookupTable}) =
       _$_CvCameraCalibrationData;
   const _CvCameraCalibrationData._() : super._();
 
@@ -320,6 +345,9 @@ abstract class _CvCameraCalibrationData extends CvCameraCalibrationData {
   Float64List get lensDistortionLookupTable;
   @override
   CGPoint get lensDistortionCenter;
+  @override
+  @Float64ListConverter()
+  Float64List get inverseLensDistortionLookupTable;
   @override
   @JsonKey(ignore: true)
   _$$_CvCameraCalibrationDataCopyWith<_$_CvCameraCalibrationData>
