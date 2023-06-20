@@ -281,6 +281,13 @@ class FaceIdSensorData with _$FaceIdSensorData {
     }).toList();
   }
 
+  CameraIntrinsics getIntrinsics() {
+    return cameraCalibrationData.toCameraIntrinsics(
+      imageWidth: width.toDouble(),
+      imageHeight: height.toDouble(),
+    );
+  }
+
   factory FaceIdSensorData.fromJson(Map<String, dynamic> json) =>
       _$FaceIdSensorDataFromJson(json.map((key, value) {
         if (value is Map) {
