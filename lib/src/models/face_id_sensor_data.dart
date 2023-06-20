@@ -143,6 +143,7 @@ class FaceIdSensorData with _$FaceIdSensorData {
     @Float32ListConverter() required Float32List depthValues,
     required int width,
     required int height,
+    required CvCameraCalibrationData cameraCalibrationData,
   }) = _FaceIdSensorData;
 
   const FaceIdSensorData._();

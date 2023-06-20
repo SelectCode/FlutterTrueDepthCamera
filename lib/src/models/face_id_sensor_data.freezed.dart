@@ -500,6 +500,8 @@ mixin _$FaceIdSensorData {
   Float32List get depthValues => throw _privateConstructorUsedError;
   int get width => throw _privateConstructorUsedError;
   int get height => throw _privateConstructorUsedError;
+  CvCameraCalibrationData get cameraCalibrationData =>
+      throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -518,7 +520,10 @@ abstract class $FaceIdSensorDataCopyWith<$Res> {
       @Float64ListConverter() Float64List xyz,
       @Float32ListConverter() Float32List depthValues,
       int width,
-      int height});
+      int height,
+      CvCameraCalibrationData cameraCalibrationData});
+
+  $CvCameraCalibrationDataCopyWith<$Res> get cameraCalibrationData;
 }
 
 /// @nodoc
@@ -539,6 +544,7 @@ class _$FaceIdSensorDataCopyWithImpl<$Res, $Val extends FaceIdSensorData>
     Object? depthValues = null,
     Object? width = null,
     Object? height = null,
+    Object? cameraCalibrationData = null,
   }) {
     return _then(_value.copyWith(
       rgb: null == rgb
@@ -561,7 +567,20 @@ class _$FaceIdSensorDataCopyWithImpl<$Res, $Val extends FaceIdSensorData>
           ? _value.height
           : height // ignore: cast_nullable_to_non_nullable
               as int,
+      cameraCalibrationData: null == cameraCalibrationData
+          ? _value.cameraCalibrationData
+          : cameraCalibrationData // ignore: cast_nullable_to_non_nullable
+              as CvCameraCalibrationData,
     ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $CvCameraCalibrationDataCopyWith<$Res> get cameraCalibrationData {
+    return $CvCameraCalibrationDataCopyWith<$Res>(_value.cameraCalibrationData,
+        (value) {
+      return _then(_value.copyWith(cameraCalibrationData: value) as $Val);
+    });
   }
 }
 
@@ -578,7 +597,11 @@ abstract class _$$_FaceIdSensorDataCopyWith<$Res>
       @Float64ListConverter() Float64List xyz,
       @Float32ListConverter() Float32List depthValues,
       int width,
-      int height});
+      int height,
+      CvCameraCalibrationData cameraCalibrationData});
+
+  @override
+  $CvCameraCalibrationDataCopyWith<$Res> get cameraCalibrationData;
 }
 
 /// @nodoc
@@ -597,6 +620,7 @@ class __$$_FaceIdSensorDataCopyWithImpl<$Res>
     Object? depthValues = null,
     Object? width = null,
     Object? height = null,
+    Object? cameraCalibrationData = null,
   }) {
     return _then(_$_FaceIdSensorData(
       rgb: null == rgb
@@ -619,6 +643,10 @@ class __$$_FaceIdSensorDataCopyWithImpl<$Res>
           ? _value.height
           : height // ignore: cast_nullable_to_non_nullable
               as int,
+      cameraCalibrationData: null == cameraCalibrationData
+          ? _value.cameraCalibrationData
+          : cameraCalibrationData // ignore: cast_nullable_to_non_nullable
+              as CvCameraCalibrationData,
     ));
   }
 }
@@ -631,7 +659,8 @@ class _$_FaceIdSensorData extends _FaceIdSensorData {
       @Float64ListConverter() required this.xyz,
       @Float32ListConverter() required this.depthValues,
       required this.width,
-      required this.height})
+      required this.height,
+      required this.cameraCalibrationData})
       : super._();
 
   factory _$_FaceIdSensorData.fromJson(Map<String, dynamic> json) =>
@@ -650,10 +679,12 @@ class _$_FaceIdSensorData extends _FaceIdSensorData {
   final int width;
   @override
   final int height;
+  @override
+  final CvCameraCalibrationData cameraCalibrationData;
 
   @override
   String toString() {
-    return 'FaceIdSensorData(rgb: $rgb, xyz: $xyz, depthValues: $depthValues, width: $width, height: $height)';
+    return 'FaceIdSensorData(rgb: $rgb, xyz: $xyz, depthValues: $depthValues, width: $width, height: $height, cameraCalibrationData: $cameraCalibrationData)';
   }
 
   @override
@@ -666,7 +697,9 @@ class _$_FaceIdSensorData extends _FaceIdSensorData {
             const DeepCollectionEquality()
                 .equals(other.depthValues, depthValues) &&
             (identical(other.width, width) || other.width == width) &&
-            (identical(other.height, height) || other.height == height));
+            (identical(other.height, height) || other.height == height) &&
+            (identical(other.cameraCalibrationData, cameraCalibrationData) ||
+                other.cameraCalibrationData == cameraCalibrationData));
   }
 
   @JsonKey(ignore: true)
@@ -677,7 +710,8 @@ class _$_FaceIdSensorData extends _FaceIdSensorData {
       const DeepCollectionEquality().hash(xyz),
       const DeepCollectionEquality().hash(depthValues),
       width,
-      height);
+      height,
+      cameraCalibrationData);
 
   @JsonKey(ignore: true)
   @override
@@ -695,11 +729,13 @@ class _$_FaceIdSensorData extends _FaceIdSensorData {
 
 abstract class _FaceIdSensorData extends FaceIdSensorData {
   const factory _FaceIdSensorData(
-      {@Uint8ListConverter() required final Uint8List rgb,
-      @Float64ListConverter() required final Float64List xyz,
-      @Float32ListConverter() required final Float32List depthValues,
-      required final int width,
-      required final int height}) = _$_FaceIdSensorData;
+          {@Uint8ListConverter() required final Uint8List rgb,
+          @Float64ListConverter() required final Float64List xyz,
+          @Float32ListConverter() required final Float32List depthValues,
+          required final int width,
+          required final int height,
+          required final CvCameraCalibrationData cameraCalibrationData}) =
+      _$_FaceIdSensorData;
   const _FaceIdSensorData._() : super._();
 
   factory _FaceIdSensorData.fromJson(Map<String, dynamic> json) =
@@ -718,6 +754,8 @@ abstract class _FaceIdSensorData extends FaceIdSensorData {
   int get width;
   @override
   int get height;
+  @override
+  CvCameraCalibrationData get cameraCalibrationData;
   @override
   @JsonKey(ignore: true)
   _$$_FaceIdSensorDataCopyWith<_$_FaceIdSensorData> get copyWith =>

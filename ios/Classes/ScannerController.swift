@@ -524,7 +524,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             return [x, y, z]
         }
 
-        return FaceIdData(XYZ: xyz, RGB: rgb, depthValues: depthValues, width: Int32(colorImage.width), height: Int32(colorImage.height))
+        return FaceIdData(XYZ: xyz, RGB: rgb, depthValues: depthValues, width: Int32(colorImage.width), height: Int32(colorImage.height), cameraCalibrationData: cameraCalibrationData)
     }
 
 

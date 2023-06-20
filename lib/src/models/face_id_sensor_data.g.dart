@@ -14,6 +14,8 @@ _$_FaceIdSensorData _$$_FaceIdSensorDataFromJson(Map<String, dynamic> json) =>
           const Float32ListConverter().fromJson(json['depthValues'] as List),
       width: json['width'] as int,
       height: json['height'] as int,
+      cameraCalibrationData: CvCameraCalibrationData.fromJson(
+          json['cameraCalibrationData'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$_FaceIdSensorDataToJson(_$_FaceIdSensorData instance) =>
@@ -23,4 +25,5 @@ Map<String, dynamic> _$$_FaceIdSensorDataToJson(_$_FaceIdSensorData instance) =>
       'depthValues': const Float32ListConverter().toJson(instance.depthValues),
       'width': instance.width,
       'height': instance.height,
+      'cameraCalibrationData': instance.cameraCalibrationData,
     };

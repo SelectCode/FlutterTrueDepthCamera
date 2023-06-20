@@ -217,45 +217,51 @@ class FLNativeView: NSObject, FlutterPlatformView {
 
     func calibrationDataSnapshot(_ onData: @escaping (Dictionary<String, Any?>) -> Void) {
         scannerController?.getCalibrationData { (data) in
-            let calibrationData = data
-            let pixelSize = NSNumber(value: calibrationData.pixelSize)
-            let iMatrix = calibrationData.intrinsicMatrix.columns;
-            let intrinsicMatrix = [
-                self.parseMatrixCol(iMatrix.0),
-                self.parseMatrixCol(iMatrix.1),
-                self.parseMatrixCol(iMatrix.2),
-            ]
-            let eMatrix = calibrationData.extrinsicMatrix.columns
-            let extrinsicMatrix: [Dictionary<String, NSNumber>] = [
-                self.parseMatrixCol(eMatrix.0),
-                self.parseMatrixCol(eMatrix.1),
-                self.parseMatrixCol(eMatrix.2),
-                self.parseMatrixCol(eMatrix.3),
-            ]
-            let intrinsicMatrixReferenceDimensionsData = calibrationData.intrinsicMatrixReferenceDimensions
-            let intrinsicMatrixReferenceDimensions: Dictionary<String, NSNumber> = [
-                "width": NSNumber(value: intrinsicMatrixReferenceDimensionsData.width),
-                "height": NSNumber(value: intrinsicMatrixReferenceDimensionsData.height),
-            ]
-            let lensDistortionCenterData = calibrationData.lensDistortionCenter
-            let lensDistortionCenter: Dictionary<String, NSNumber> = [
-                "x": NSNumber(value: lensDistortionCenterData.x),
-                "y": NSNumber(value: lensDistortionCenterData.y),
-            ]
-            let lensDistortionLookupTableData = calibrationData.lensDistortionLookupTable
-            let lensDistortionLookupTable = FlutterStandardTypedData(bytes: Data(lensDistortionLookupTableData!.map { point in
-                point
-            }))
-
-            onData([
-                "intrinsicMatrix": intrinsicMatrix,
-                "intrinsicMatrixReferenceDimensions": intrinsicMatrixReferenceDimensions,
-                "extrinsicMatrix": extrinsicMatrix,
-                "pixelSize": pixelSize,
-                "lensDistortionLookupTable": lensDistortionLookupTable,
-                "lensDistortionCenter": lensDistortionCenter
-            ]);
+            let encodedData = self.encodeCameraCalibrationData(data: data)
+            onData(encodedData);
         }
+    }
+
+    private func encodeCameraCalibrationData(data: AVCameraCalibrationData) -> [String: Any] {
+        let calibrationData = data
+        let pixelSize = NSNumber(value: calibrationData.pixelSize)
+        let iMatrix = calibrationData.intrinsicMatrix.columns;
+        let intrinsicMatrix = [
+            parseMatrixCol(iMatrix.0),
+            parseMatrixCol(iMatrix.1),
+            parseMatrixCol(iMatrix.2),
+        ]
+        let eMatrix = calibrationData.extrinsicMatrix.columns
+        let extrinsicMatrix: [Dictionary<String, NSNumber>] = [
+            parseMatrixCol(eMatrix.0),
+            parseMatrixCol(eMatrix.1),
+            parseMatrixCol(eMatrix.2),
+            parseMatrixCol(eMatrix.3),
+        ]
+        let intrinsicMatrixReferenceDimensionsData = calibrationData.intrinsicMatrixReferenceDimensions
+        let intrinsicMatrixReferenceDimensions: Dictionary<String, NSNumber> = [
+            "width": NSNumber(value: intrinsicMatrixReferenceDimensionsData.width),
+            "height": NSNumber(value: intrinsicMatrixReferenceDimensionsData.height),
+        ]
+        let lensDistortionCenterData = calibrationData.lensDistortionCenter
+        let lensDistortionCenter: Dictionary<String, NSNumber> = [
+            "x": NSNumber(value: lensDistortionCenterData.x),
+            "y": NSNumber(value: lensDistortionCenterData.y),
+        ]
+        let lensDistortionLookupTableData = calibrationData.lensDistortionLookupTable
+        let lensDistortionLookupTable = FlutterStandardTypedData(bytes: Data(lensDistortionLookupTableData!.map { point in
+            point
+        }))
+
+        let encodedData = [
+            "intrinsicMatrix": intrinsicMatrix,
+            "intrinsicMatrixReferenceDimensions": intrinsicMatrixReferenceDimensions,
+            "extrinsicMatrix": extrinsicMatrix,
+            "pixelSize": pixelSize,
+            "lensDistortionLookupTable": lensDistortionLookupTable,
+            "lensDistortionCenter": lensDistortionCenter
+        ] as [String: Any]
+        return encodedData
     }
 
     func parseMatrixCol(_ col: simd_float3) -> Dictionary<String, NSNumber> {
@@ -347,13 +353,14 @@ class FLNativeView: NSObject, FlutterPlatformView {
                     $0.bytes
                 }
         ))
-
+        let calibrationData = self.encodeCameraCalibrationData(data: data.cameraCalibrationData)
         return [
             "width": width,
             "height": height,
             "xyz": xyz,
             "rgb": rgb,
-            "depthValues": depthValues
+            "depthValues": depthValues,
+            "cameraCalibrationData": calibrationData
         ]
     }
 
