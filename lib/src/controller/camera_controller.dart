@@ -1,8 +1,5 @@
-import 'package:cv_camera/src/models/object_detection_options.dart';
-import 'package:cv_camera/src/models/object_detection_result.dart';
 import 'package:flutter/material.dart';
 
-import '../models/calibration_data/calibration_data.dart';
 import '../models/models.dart';
 
 abstract class CameraController {
@@ -42,6 +39,10 @@ abstract class CameraController {
 
   ObjectDetectionOptions get objectDetectionOptions;
 
+  PreferredFrameRate get preferredFrameRate;
+
+  PreferredResolution get preferredResolution;
+
   /// Gets the calibration data of the current camera.
   Future<CvCameraCalibrationData> getCalibrationData();
 
@@ -57,4 +58,8 @@ abstract class CameraController {
   Future<void> setLensDirection(LensDirection lensDirection);
 
   bool get enableDistortionCorrection;
+
+  Future<String> stopMovieRecording();
+
+  Future<void> startMovieRecording();
 }

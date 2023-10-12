@@ -6,6 +6,7 @@ import 'package:cv_camera/cv_camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_extend/share_extend.dart';
+import 'package:video_player/video_player.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,18 +30,21 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _controller = CvCamera.getCameraController(
       enableDistortionCorrection: false,
-      objectDetectionOptions: const ObjectDetectionOptions(
-        minDepth: 0.21,
-        maxDepth: 0.45,
-        centerWidthStart: 0.3,
-        centerWidthEnd: 0.7,
-        centerHeightStart: 0.2,
-        centerHeightEnd: 0.8,
-        minCoverage: 0.5,
-      ),
+      // objectDetectionOptions: const ObjectDetectionOptions(
+      //   minDepth: 0.21,
+      //   maxDepth: 0.45,
+      //   centerWidthStart: 0.3,
+      //   centerWidthEnd: 0.7,
+      //   centerHeightStart: 0.2,
+      //   centerHeightEnd: 0.8,
+      //   minCoverage: 0.5,
+      // ),
+      preferredResolution: PreferredResolution.x1920x1080,
+      lensDirection: LensDirection.back,
+      preferredFrameRate: PreferredFrameRate.fps240,
     );
     _shootEffectController = CameraShootEffectController();
-    setUpStream();
+    // setUpStream();
   }
 
   void setUpStream() async {
@@ -59,12 +63,12 @@ class _MyAppState extends State<MyApp> {
   Future<void> shareFaceIdData(
       TakePictureResult result, BuildContext context) async {
     print('writing to file');
-    final filepath = await writePlyFile(result.faceIdSensorData!);
+    // final filepath = await writePlyFile(result.faceIdSensorData!);
     final bytes = ImageBuilder.fromCameraImage(result.cameraImage).asJpg();
     final imagePath = await writeImageFile(bytes);
 
     await ShareExtend.shareMultiple([
-      filepath,
+      // filepath,
       imagePath,
     ], 'file');
     showCopiedToClipboardNotification(context);
@@ -155,6 +159,27 @@ class _MyAppState extends State<MyApp> {
                           await _controller
                               .setLensDirection(LensDirection.front);
                         }
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.play_circle),
+                      onPressed: () async {
+                        await _controller.startMovieRecording();
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.stop_circle),
+                      onPressed: () async {
+                        final url = await _controller.stopMovieRecording();
+                        debugPrint(url);
+                        await showModalBottomSheet(
+                          context: context,
+                          builder: (context) => SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.7,
+                            child: _VideoPlayer(url: url),
+                          ),
+                        );
+                        await ShareExtend.share(url, 'video');
                       },
                     )
                   ],
@@ -266,5 +291,50 @@ class _ObjectDetectionDisplayState extends State<ObjectDetectionDisplay> {
     return Center(
       child: Text(objectDetectionState),
     );
+  }
+}
+
+/// Stateful widget to fetch and then display video content.
+class _VideoPlayer extends StatefulWidget {
+  const _VideoPlayer({super.key, required this.url});
+
+  final String url;
+
+  @override
+  _VideoPlayerState createState() => _VideoPlayerState();
+}
+
+class _VideoPlayerState extends State<_VideoPlayer> {
+  late VideoPlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url))
+      ..initialize().then((_) {
+        setState(() {
+          _controller.setLooping(true).then((value) => _controller.play());
+        });
+      });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: _controller.value.isInitialized
+          ? AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: VideoPlayer(_controller),
+            )
+          : Container(
+              child: Text('fail'),
+            ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

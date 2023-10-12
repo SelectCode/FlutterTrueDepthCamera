@@ -29,5 +29,7 @@ abstract class CvCameraPlatform extends PlatformInterface {
     LensDirection? lensDirection,
     bool? enableDistortionCorrection,
     ObjectDetectionOptions? objectDetectionOptions,
+    PreferredResolution? preferredResolution,
+    PreferredFrameRate? preferredFrameRate,
   });
 }

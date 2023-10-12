@@ -12,8 +12,8 @@ import SceneKit
 import VideoToolbox
 import CoreGraphics
 
+class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureFileOutputRecordingDelegate {
 
-class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
     private enum SessionSetupResult {
         case success
         case notAuthorized
@@ -30,9 +30,9 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
     private let session = AVCaptureSession()
     private var videoDeviceInput: AVCaptureDeviceInput!
-    private var videoDeviceDiscoverySession: AVCaptureDevice.DiscoverySession!
     public var canUseDepthCamera: Bool!
     private let cameraOptions: CameraOptions!
+    private let movieOutput = AVCaptureMovieFileOutput()
 
     @available(iOS 11.1, *)
     init(cameraOptions: CameraOptions!) {
@@ -62,33 +62,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     }
 
     fileprivate func setDeviceDiscoverySession(lensDirection: LensDirection) {
-        var position: AVCaptureDevice.Position
-        var deviceTypes: [AVCaptureDevice.DeviceType]
-        // Determine which lensDirection should be used and set the [deviceTypes] accordingly.
-        switch (lensDirection) {
-        case .front: position = .front
-            if #available(iOS 11.1, *) {
-                deviceTypes = [.builtInTrueDepthCamera]
-            } else {
-                print("iOS 11.1 or higher is required for front camera")
-                deviceTypes = [.builtInWideAngleCamera]
-            }
-            canUseDepthCamera = true
-        case .back: position = .back
-            canUseDepthCamera = true
-            // only use lidar when ios version is greater or equal to 15.4
 
-            if #available(iOS 15.4, *) {
-                deviceTypes = [.builtInLiDARDepthCamera, .builtInDualCamera]
-            } else {
-                print("iOS 15.4 or higher is required for usage of LiDAR")
-                deviceTypes = [.builtInDualCamera, .builtInWideAngleCamera]
-            }
-
-        }
-        videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes,
-                mediaType: .video,
-                position: position);
     }
 
     @objc func handleNotification(_ notification: Notification) {
@@ -111,6 +85,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     private var faceIdSensorDataCallback: ((FaceIdData) -> Void)?
     private var depthValuesCallback: (([Float32]) -> Void)?
     private var onObjectCoverageChange: ((ObjectDetectionResult) -> Void)?
+    private var onMovieRecordStop: ((URL, Error?) -> Void)?
 
 
     func getCalibrationData(_ callback: @escaping (AVCameraCalibrationData) -> Void) {
@@ -302,8 +277,6 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
             }
         }
-
-
     }
 
     func checkForObject(depthValues: [Float32], width: Int, height: Int) -> ObjectDetectionResult {
@@ -564,14 +537,73 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
     /// Sets up current capture session.
     private func configureSession() {
+        var position: AVCaptureDevice.Position
+        var deviceTypes: [AVCaptureDevice.DeviceType]
+        print(cameraOptions)
+        // Determine which lensDirection should be used and set the [deviceTypes] accordingly.
+        switch (cameraOptions.lensDirection) {
+        case .front: position = .front
+            if #available(iOS 11.1, *) {
+                deviceTypes = [.builtInTrueDepthCamera]
+            } else {
+                print("iOS 11.1 or higher is required for front camera")
+                deviceTypes = [.builtInWideAngleCamera]
+            }
+        case .back: position = .back
+            // only use lidar when ios version is greater or equal to 15.4
+
+            if #available(iOS 15.4, *) {
+                deviceTypes = [.builtInLiDARDepthCamera, .builtInDualCamera, .builtInTripleCamera, .builtInWideAngleCamera, .builtInDualWideCamera]
+            } else {
+                print("iOS 15.4 or higher is required for usage of LiDAR")
+                if #available(iOS 13.0, *) {
+                    deviceTypes = [.builtInDualCamera, .builtInTripleCamera, .builtInWideAngleCamera, .builtInDualWideCamera]
+                } else {
+                    print("Encountered unsupported ios version 😇")
+                    deviceTypes = []
+                }
+            }
+
+        }
+        let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes,
+                mediaType: .video,
+                position: position);
+
+
         if setupResult != .success {
             return
         }
 
-        let defaultVideoDevice: AVCaptureDevice? = videoDeviceDiscoverySession.devices.first
+        let captureDevices: [AVCaptureDevice] = videoDeviceDiscoverySession.devices
 
-        guard let videoDevice = defaultVideoDevice else {
-            print("Could not find any video device")
+        var currentFrameRate: PreferredFrameRate? = cameraOptions.preferredFrameRate
+        var videoDevice: AVCaptureDevice?
+        while videoDevice == nil && currentFrameRate != nil {
+            videoDevice = filterDevices(captureDevices: captureDevices, preferredFrameRate: currentFrameRate!)
+            if videoDevice == nil {
+                currentFrameRate = currentFrameRate!.previous()
+            }
+        }
+
+        guard let currentFrameRate = currentFrameRate, let videoDevice = videoDevice else {
+            print("Could not find any video device.")
+            return
+        }
+
+
+        if currentFrameRate != cameraOptions.preferredFrameRate {
+            print("Could not find any video device matching the preferred framerate. Using \(currentFrameRate) instead")
+        }
+
+        canUseDepthCamera = videoDevice.activeDepthDataFormat != nil
+
+
+        guard let format = videoDevice.formats.filter({
+                    $0.videoSupportedFrameRateRanges.contains(where: { Int($0.maxFrameRate) >= cameraOptions.preferredFrameRate.frameRate() })
+                })
+                .first
+        else {
+            print("No video device format found for framerate \(cameraOptions.preferredFrameRate.frameRate())")
             setupResult = .configurationFailed
             return
         }
@@ -584,17 +616,14 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             return
         }
 
-        print("Using camera: \(videoDevice.localizedName) with format: \(videoDevice.activeFormat)")
 
         session.beginConfiguration()
-
-        if (videoDevice.position == .front) {
-            session.sessionPreset = AVCaptureSession.Preset.vga640x480
-        } else {
+        switch cameraOptions.preferredResolution {
+        case .x1920x1080:
+            session.sessionPreset = AVCaptureSession.Preset.hd1920x1080
+        case .x640x480:
             session.sessionPreset = AVCaptureSession.Preset.vga640x480
         }
-
-
         // Add a video input
         guard session.canAddInput(videoDeviceInput) else {
             print("Could not add video device input to the session")
@@ -603,6 +632,31 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             return
         }
         session.addInput(videoDeviceInput)
+
+        do {
+            try videoDevice.lockForConfiguration()
+            var bestFrameRateRange: AVFrameRateRange?
+            for range in format.videoSupportedFrameRateRanges {
+                print(range)
+                if (bestFrameRateRange == nil) {
+                    bestFrameRateRange = range
+                } else if range.maxFrameRate > bestFrameRateRange!.maxFrameRate {
+                    bestFrameRateRange = range
+                }
+            }
+            print(bestFrameRateRange!.minFrameDuration)
+            videoDevice.activeFormat = format
+            videoDevice.activeVideoMinFrameDuration = bestFrameRateRange!.minFrameDuration
+            videoDevice.activeVideoMaxFrameDuration = bestFrameRateRange!.minFrameDuration
+
+            videoDevice.unlockForConfiguration()
+        } catch {
+            print("Could not lock device for configuration: \(error)")
+            setupResult = .configurationFailed
+            return
+        }
+
+        print("Using camera: \(videoDevice.localizedName) with format: \(videoDevice.activeFormat)")
 
         // Add a video data output
         if session.canAddOutput(videoDataOutput) {
@@ -613,6 +667,12 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             setupResult = .configurationFailed
             session.commitConfiguration()
             return
+        }
+
+        if (session.canAddOutput(movieOutput)) {
+            session.addOutput(movieOutput)
+        } else {
+            print("Could not add movieOutput to the session")
         }
 
         // Configuration needs to be different in order to use the depth camera.
@@ -664,5 +724,38 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             videoDataOutput.setSampleBufferDelegate(self, queue: dataOutputQueue)
         }
         session.commitConfiguration()
+    }
+
+    private func filterDevices(captureDevices: [AVCaptureDevice], preferredFrameRate: PreferredFrameRate) -> AVCaptureDevice? {
+        captureDevices.first { device in
+            device.formats.contains {
+                $0.videoSupportedFrameRateRanges.contains(where: {
+                    Int($0.maxFrameRate) >= preferredFrameRate.frameRate()
+                })
+            }
+        }
+    }
+
+    func startMovieRecording(
+
+    ) {
+        let filePath = NSTemporaryDirectory() + "tempMovie.mov"
+        let outputURL = URL(fileURLWithPath: filePath)
+        movieOutput.startRecording(to: outputURL, recordingDelegate: self)
+    }
+
+    func stopMovieRecording(
+            _ callback: @escaping (URL, Error?) -> Void
+    ) {
+        onMovieRecordStop = callback
+        movieOutput.stopRecording()
+    }
+
+    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
+        print("Finished Recording")
+        if let callback = onMovieRecordStop {
+            callback(outputFileURL, error)
+            onMovieRecordStop = nil
+        }
     }
 }

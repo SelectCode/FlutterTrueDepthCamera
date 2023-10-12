@@ -6,3 +6,5 @@ export 'lens_direction.dart';
 export 'plane.dart';
 export 'object_detection_options.dart';
 export 'object_detection_result.dart';
+export 'preferred_frame_rate.dart';
+export 'preferred_resolution.dart';

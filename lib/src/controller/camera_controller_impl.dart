@@ -24,6 +24,12 @@ class CameraControllerImpl implements CameraController {
   @override
   final bool enableDistortionCorrection;
 
+  @override
+  final PreferredFrameRate preferredFrameRate;
+
+  @override
+  final PreferredResolution preferredResolution;
+
   /// Determines which lens the camera uses.
   @override
   LensDirection get lensDirection => _lensDirection;
@@ -43,6 +49,8 @@ class CameraControllerImpl implements CameraController {
     required this.objectDetectionEventChannel,
     ObjectDetectionOptions? objectDetectionOptions,
     this.enableDistortionCorrection = true,
+    required this.preferredFrameRate,
+    required this.preferredResolution,
     Clock? clock,
   })  : _lensDirection = lensDirection ?? LensDirection.front,
         clock = clock ?? const Clock(),
@@ -205,6 +213,7 @@ class CameraControllerImpl implements CameraController {
     return FaceIdSensorData.fromJson(response);
   }
 
+
   @override
   Future<List<double>> getDepthValues() async {
     final result =
@@ -246,6 +255,32 @@ class CameraControllerImpl implements CameraController {
     });
     _lensDirection = lensDirection;
   }
+
+  bool _isRecordingMovie = false;
+
+  @override
+  Future<void> startMovieRecording() async {
+    if(_isRecordingMovie) {
+      throw Exception("Already recording movie");
+    }
+    await readyCompleter.future;
+    await methodChannel.invokeMethod("start_movie_recording");
+    _isRecordingMovie = true;
+  }
+
+  @override
+  Future<String> stopMovieRecording() async {
+    if(!_isRecordingMovie) {
+      throw Exception("Not recording movie");
+    }
+    final url = await methodChannel.invokeMethod<String>("stop_movie_recording");
+    _isRecordingMovie = false;
+    if(url == null) {
+      throw Exception("Could not stop recording");
+    }
+    return url;
+  }
+
 }
 
 /// Params that are passed to [CameraControllerImpl._savePictureHandler].

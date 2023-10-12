@@ -14,10 +14,14 @@ abstract class CvCamera {
     LensDirection? lensDirection,
     bool? enableDistortionCorrection,
     ObjectDetectionOptions? objectDetectionOptions,
+    PreferredResolution? preferredResolution,
+    PreferredFrameRate? preferredFrameRate,
   }) =>
       CvCameraPlatform.instance.getCameraController(
         lensDirection: lensDirection,
         enableDistortionCorrection: enableDistortionCorrection,
         objectDetectionOptions: objectDetectionOptions,
+        preferredFrameRate: preferredFrameRate,
+        preferredResolution: preferredResolution,
       );
 }

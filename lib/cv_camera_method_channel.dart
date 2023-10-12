@@ -25,6 +25,8 @@ class MethodChannelCvCamera extends CvCameraPlatform {
     LensDirection? lensDirection,
     bool? enableDistortionCorrection,
     ObjectDetectionOptions? objectDetectionOptions,
+    PreferredResolution? preferredResolution,
+    PreferredFrameRate? preferredFrameRate,
     Clock? clock,
   }) {
     return CameraControllerImpl(
@@ -35,6 +37,8 @@ class MethodChannelCvCamera extends CvCameraPlatform {
       clock: clock,
       enableDistortionCorrection: enableDistortionCorrection ?? true,
       objectDetectionOptions: objectDetectionOptions,
+      preferredFrameRate: preferredFrameRate ?? PreferredFrameRate.fps30,
+      preferredResolution: preferredResolution ?? PreferredResolution.x640x480,
     );
   }
 }

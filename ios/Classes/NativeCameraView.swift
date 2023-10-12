@@ -122,6 +122,17 @@ class FLNativeView: NSObject, FlutterPlatformView {
                     let lensDirection = FLNativeView.parseLensDirection(args: call.arguments as? [String: Any])
                     self.scannerController!.changeLensDirection(lensDirection)
                     result("")
+                case "start_movie_recording":
+                    self.scannerController!.startMovieRecording()
+                    result(nil)
+                case "stop_movie_recording":
+                    self.scannerController!.stopMovieRecording { url, error in
+                        if let error = error {
+                            result(FlutterError(code: "\(error._code)", message: error.localizedDescription, details: nil))
+                            return
+                        }
+                        result(url.absoluteURL.absoluteString)
+                    }
                 default:
                     result(FlutterError())
                 }
@@ -184,10 +195,41 @@ class FLNativeView: NSObject, FlutterPlatformView {
         let lensDirection: LensDirection = FLNativeView.parseLensDirection(args: args)
         let enableDistortionCorrection: Bool = args["enableDistortionCorrection"] as! Bool
         let objectDetectionRange = FLNativeView.parseObjectDetectionRange(args: args)
+        let preferredResolution: PreferredResolution!
+        let rawRes = args["preferredResolution"] as! String
+        switch rawRes {
+        case "x1920x1080":
+            preferredResolution = PreferredResolution.x1920x1080
+        case "x640x480":
+            preferredResolution = PreferredResolution.x640x480
+        default:
+            print("Encountered unknown resolution: \(rawRes)")
+            preferredResolution = PreferredResolution.x640x480
+        }
+        let rawFrameRate = args["preferredFrameRate"] as! String
+        let preferredFrameRate: PreferredFrameRate!
+
+        switch rawFrameRate {
+        case "fps24":
+            preferredFrameRate = PreferredFrameRate.fps24
+        case "fps30":
+            preferredFrameRate = PreferredFrameRate.fps30
+        case "fps60":
+            preferredFrameRate = PreferredFrameRate.fps60
+        case "fps120":
+            preferredFrameRate = PreferredFrameRate.fps120
+        case "fps240":
+            preferredFrameRate = PreferredFrameRate.fps240
+        default:
+            print("Encountered unknown frame rate: \(rawFrameRate)")
+            preferredFrameRate = PreferredFrameRate.fps30
+        }
         return CameraOptions(
                 lensDirection: lensDirection,
                 enableDistortionCorrection: enableDistortionCorrection,
-                objectDetectionOptions: objectDetectionRange
+                objectDetectionOptions: objectDetectionRange,
+                preferredFrameRate: preferredFrameRate,
+                preferredResolution: preferredResolution
         )
     }
 
