@@ -27,6 +27,7 @@ final CvCameraCalibrationData _calibrationData = CvCameraCalibrationData(
   intrinsicMatrixReferenceDimensions: const CGSize(width: 1, height: 2),
   lensDistortionLookupTable: Float64List.fromList([1, 2, 3, 4, 5, 6, 7, 8, 9]),
   lensDistortionCenter: const CGPoint(x: 1, y: 2),
+  inverseLensDistortionLookupTable: Float64List(0),
 );
 
 void main() {
