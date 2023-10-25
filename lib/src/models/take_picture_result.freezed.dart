@@ -25,7 +25,8 @@ mixin _$TakePictureResult {
   FaceIdSensorData? get faceIdSensorData => throw _privateConstructorUsedError;
   @JsonKey(name: "image")
   CameraImage get cameraImage => throw _privateConstructorUsedError;
-  String get path => throw _privateConstructorUsedError;
+  CameraPitch get pitch => throw _privateConstructorUsedError;
+  String? get path => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -42,10 +43,12 @@ abstract class $TakePictureResultCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: "depthData") FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image") CameraImage cameraImage,
-      String path});
+      CameraPitch pitch,
+      String? path});
 
   $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData;
   $CameraImageCopyWith<$Res> get cameraImage;
+  $CameraPitchCopyWith<$Res> get pitch;
 }
 
 /// @nodoc
@@ -63,7 +66,8 @@ class _$TakePictureResultCopyWithImpl<$Res, $Val extends TakePictureResult>
   $Res call({
     Object? faceIdSensorData = freezed,
     Object? cameraImage = null,
-    Object? path = null,
+    Object? pitch = null,
+    Object? path = freezed,
   }) {
     return _then(_value.copyWith(
       faceIdSensorData: freezed == faceIdSensorData
@@ -74,10 +78,14 @@ class _$TakePictureResultCopyWithImpl<$Res, $Val extends TakePictureResult>
           ? _value.cameraImage
           : cameraImage // ignore: cast_nullable_to_non_nullable
               as CameraImage,
-      path: null == path
+      pitch: null == pitch
+          ? _value.pitch
+          : pitch // ignore: cast_nullable_to_non_nullable
+              as CameraPitch,
+      path: freezed == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ) as $Val);
   }
 
@@ -100,6 +108,14 @@ class _$TakePictureResultCopyWithImpl<$Res, $Val extends TakePictureResult>
       return _then(_value.copyWith(cameraImage: value) as $Val);
     });
   }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $CameraPitchCopyWith<$Res> get pitch {
+    return $CameraPitchCopyWith<$Res>(_value.pitch, (value) {
+      return _then(_value.copyWith(pitch: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -113,12 +129,15 @@ abstract class _$$_TakePictureResultCopyWith<$Res>
   $Res call(
       {@JsonKey(name: "depthData") FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image") CameraImage cameraImage,
-      String path});
+      CameraPitch pitch,
+      String? path});
 
   @override
   $FaceIdSensorDataCopyWith<$Res>? get faceIdSensorData;
   @override
   $CameraImageCopyWith<$Res> get cameraImage;
+  @override
+  $CameraPitchCopyWith<$Res> get pitch;
 }
 
 /// @nodoc
@@ -134,7 +153,8 @@ class __$$_TakePictureResultCopyWithImpl<$Res>
   $Res call({
     Object? faceIdSensorData = freezed,
     Object? cameraImage = null,
-    Object? path = null,
+    Object? pitch = null,
+    Object? path = freezed,
   }) {
     return _then(_$_TakePictureResult(
       faceIdSensorData: freezed == faceIdSensorData
@@ -145,10 +165,14 @@ class __$$_TakePictureResultCopyWithImpl<$Res>
           ? _value.cameraImage
           : cameraImage // ignore: cast_nullable_to_non_nullable
               as CameraImage,
-      path: null == path
+      pitch: null == pitch
+          ? _value.pitch
+          : pitch // ignore: cast_nullable_to_non_nullable
+              as CameraPitch,
+      path: freezed == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ));
   }
 }
@@ -159,7 +183,8 @@ class _$_TakePictureResult implements _TakePictureResult {
   const _$_TakePictureResult(
       {@JsonKey(name: "depthData") required this.faceIdSensorData,
       @JsonKey(name: "image") required this.cameraImage,
-      required this.path});
+      required this.pitch,
+      this.path});
 
   factory _$_TakePictureResult.fromJson(Map<String, dynamic> json) =>
       _$$_TakePictureResultFromJson(json);
@@ -172,11 +197,13 @@ class _$_TakePictureResult implements _TakePictureResult {
   @JsonKey(name: "image")
   final CameraImage cameraImage;
   @override
-  final String path;
+  final CameraPitch pitch;
+  @override
+  final String? path;
 
   @override
   String toString() {
-    return 'TakePictureResult(faceIdSensorData: $faceIdSensorData, cameraImage: $cameraImage, path: $path)';
+    return 'TakePictureResult(faceIdSensorData: $faceIdSensorData, cameraImage: $cameraImage, pitch: $pitch, path: $path)';
   }
 
   @override
@@ -188,13 +215,14 @@ class _$_TakePictureResult implements _TakePictureResult {
                 other.faceIdSensorData == faceIdSensorData) &&
             (identical(other.cameraImage, cameraImage) ||
                 other.cameraImage == cameraImage) &&
+            (identical(other.pitch, pitch) || other.pitch == pitch) &&
             (identical(other.path, path) || other.path == path));
   }
 
   @JsonKey(ignore: true)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, faceIdSensorData, cameraImage, path);
+      Object.hash(runtimeType, faceIdSensorData, cameraImage, pitch, path);
 
   @JsonKey(ignore: true)
   @override
@@ -217,7 +245,8 @@ abstract class _TakePictureResult implements TakePictureResult {
           required final FaceIdSensorData? faceIdSensorData,
       @JsonKey(name: "image")
           required final CameraImage cameraImage,
-      required final String path}) = _$_TakePictureResult;
+      required final CameraPitch pitch,
+      final String? path}) = _$_TakePictureResult;
 
   factory _TakePictureResult.fromJson(Map<String, dynamic> json) =
       _$_TakePictureResult.fromJson;
@@ -231,7 +260,9 @@ abstract class _TakePictureResult implements TakePictureResult {
   @JsonKey(name: "image")
   CameraImage get cameraImage;
   @override
-  String get path;
+  CameraPitch get pitch;
+  @override
+  String? get path;
   @override
   @JsonKey(ignore: true)
   _$$_TakePictureResultCopyWith<_$_TakePictureResult> get copyWith =>

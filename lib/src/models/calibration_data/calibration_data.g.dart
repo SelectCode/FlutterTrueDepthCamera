@@ -22,6 +22,8 @@ _$_CvCameraCalibrationData _$$_CvCameraCalibrationDataFromJson(Map json) =>
           .fromJson(json['lensDistortionLookupTable'] as List),
       lensDistortionCenter: CGPoint.fromJson(
           Map<String, dynamic>.from(json['lensDistortionCenter'] as Map)),
+      inverseLensDistortionLookupTable: const Float64ListConverter()
+          .fromJson(json['inverseLensDistortionLookupTable'] as List),
     );
 
 Map<String, dynamic> _$$_CvCameraCalibrationDataToJson(
@@ -37,4 +39,6 @@ Map<String, dynamic> _$$_CvCameraCalibrationDataToJson(
       'lensDistortionLookupTable': const Float64ListConverter()
           .toJson(instance.lensDistortionLookupTable),
       'lensDistortionCenter': instance.lensDistortionCenter.toJson(),
+      'inverseLensDistortionLookupTable': const Float64ListConverter()
+          .toJson(instance.inverseLensDistortionLookupTable),
     };

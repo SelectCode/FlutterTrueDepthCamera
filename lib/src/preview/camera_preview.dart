@@ -29,6 +29,12 @@ class _CameraPreviewState extends State<CameraPreview> {
     // Pass parameters to the platform side.
     final Map<String, dynamic> creationParams = {
       "lensDirection": widget.controller.lensDirection.value,
+      "enableDistortionCorrection":
+          widget.controller.enableDistortionCorrection,
+      "objectDetectionOptions":
+          widget.controller.objectDetectionOptions.toJson(),
+      "preferredResolution": widget.controller.preferredResolution.name,
+      "preferredFrameRate": widget.controller.preferredFrameRate.name,
     };
 
     return Stack(

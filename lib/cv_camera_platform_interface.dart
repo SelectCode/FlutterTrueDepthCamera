@@ -1,5 +1,5 @@
 import 'package:cv_camera/cv_camera.dart';
-import 'package:cv_camera/src/controller/camera_controller.dart';
+import 'package:cv_camera/src/models/object_detection_options.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'cv_camera_method_channel.dart';
@@ -25,5 +25,11 @@ abstract class CvCameraPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  CameraController getCameraController({LensDirection? lensDirection});
+  CameraController getCameraController({
+    LensDirection? lensDirection,
+    bool? enableDistortionCorrection,
+    ObjectDetectionOptions? objectDetectionOptions,
+    PreferredResolution? preferredResolution,
+    PreferredFrameRate? preferredFrameRate,
+  });
 }

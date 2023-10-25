@@ -2,18 +2,16 @@ import 'dart:typed_data';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-class Float64ListConverter implements JsonConverter<Float64List, List> {
-  const Float64ListConverter();
+class Float32ListConverter implements JsonConverter<Float32List, List> {
+  const Float32ListConverter();
 
   @override
-  Float64List fromJson(List json) {
-    return Float64List.fromList(
-      json.cast<num>().map((e) => e.toDouble()).toList(),
-    );
+  Float32List fromJson(List json) {
+    return Float32List.fromList(json.cast<double>());
   }
 
   @override
-  List<double> toJson(Float64List object) {
+  List<double> toJson(Float32List object) {
     final list = object.toList();
     // replace all nan values with -0
     for (var i = 0; i < list.length; i++) {

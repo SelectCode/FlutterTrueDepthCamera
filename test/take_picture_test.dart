@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:clock/clock.dart';
 import 'package:cv_camera/cv_camera_method_channel.dart';
 import 'package:cv_camera/src/controller/camera_controller.dart';
+import 'package:cv_camera/src/misc/pitch/camera_pitch.dart';
 import 'package:cv_camera/src/models/models.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,7 +19,8 @@ abstract class TakePictureTestResources {
     "width": 200,
     "height": 200,
     "rgb": [1],
-    "xyz": [1.0]
+    "xyz": [1.0],
+    "depthValues": [1.0],
   };
 
   static final depthDataSerialized = FaceIdSensorData(
@@ -26,6 +28,23 @@ abstract class TakePictureTestResources {
     xyz: Float64List.fromList([1.0]),
     width: 200,
     height: 200,
+    depthValues: Float32List.fromList([1.0]), cameraCalibrationData: CvCameraCalibrationData(
+    pixelSize: 2,
+    intrinsicMatrix: [
+      const CGVector(x: 1, y: 2, z: 3),
+      const CGVector(x: 4, y: 5, z: 6),
+      const CGVector(x: 7, y: 8, z: 9),
+    ],
+    extrinsicMatrix: [
+      const CGVector(x: 1, y: 2, z: 3),
+      const CGVector(x: 4, y: 5, z: 6),
+      const CGVector(x: 7, y: 8, z: 9),
+    ],
+    intrinsicMatrixReferenceDimensions: const CGSize(width: 1, height: 2),
+    lensDistortionLookupTable: Float64List.fromList([1, 2, 3, 4, 5, 6, 7, 8, 9]),
+    lensDistortionCenter: const CGPoint(x: 1, y: 2),
+    inverseLensDistortionLookupTable: Float64List(0),
+  ),
   );
 
   static const takePictureResultJson = {
@@ -38,7 +57,7 @@ abstract class TakePictureTestResources {
   static final takePictureResult = TakePictureResult(
     faceIdSensorData: depthDataSerialized,
     cameraImage: JsonResources.nativeCameraImageSerialized,
-    path: '-',
+    path: '-', pitch: const CameraPitch(x: 0.0, y: 0.0, z: 0.0),
   );
 }
 
@@ -131,6 +150,5 @@ void main() {
       final file = File(path);
       expect(file.existsSync(), isTrue);
     });
-
   });
 }

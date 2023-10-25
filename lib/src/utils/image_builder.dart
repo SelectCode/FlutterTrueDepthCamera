@@ -6,11 +6,11 @@ class ImageBuilder {
 
   factory ImageBuilder.fromCameraImage(CameraImage source) {
     final image = Image.fromBytes(
-      source.width,
-      source.height,
-      source.getBytes(),
-      format: Format.bgra,
-      channels: Channels.rgba,
+      width: source.width,
+      height: source.height,
+      bytes: source.planes[0].bytes.buffer,
+      order: ChannelOrder.bgra,
+      numChannels: 4,
     );
     return ImageBuilder(image);
   }
@@ -25,7 +25,7 @@ class ImageBuilder {
   }
 
   ImageBuilder rotate(int degrees) {
-    _current = copyRotate(_current, degrees);
+    _current = copyRotate(_current, angle: degrees);
     return this;
   }
 

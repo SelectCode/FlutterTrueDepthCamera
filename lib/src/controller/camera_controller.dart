@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../models/calibration_data/calibration_data.dart';
 import '../models/models.dart';
 
 abstract class CameraController {
@@ -17,7 +16,7 @@ abstract class CameraController {
   /// Returns a [TakePictureResult].
   ///
   /// [FaceIdSensorData] is null when device does not have a face id sensor or [lensDirection] is not [LensDirection.front].
-  Future<TakePictureResult> takePicture();
+  Future<TakePictureResult> takePicture({bool saveImage = false});
 
   /// Disposes all needed resources of the [CameraController].
   ///
@@ -38,14 +37,29 @@ abstract class CameraController {
   /// Determines which lens the camera uses.
   LensDirection get lensDirection;
 
+  ObjectDetectionOptions get objectDetectionOptions;
+
+  PreferredFrameRate get preferredFrameRate;
+
+  PreferredResolution get preferredResolution;
+
   /// Gets the calibration data of the current camera.
   Future<CvCameraCalibrationData> getCalibrationData();
 
   /// Returns a snapshot of the current [FaceIdSensorData].
   Future<FaceIdSensorData> getFaceIdSensorData();
 
-  /// Returns a stream of snapshots of the current [FaceIdSensorData].
-  ///
-  /// `interval` specifies the interval in milliseconds between two snapshots.
-  Stream<FaceIdSensorData> getFaceIdSensorDataStream(int interval);
+  Future<List<double>> getDepthValues();
+
+  Future<Stream<ObjectDetectionResult>> startObjectCoverageStream();
+
+  Future<void> stopObjectCoverageStream();
+
+  Future<void> setLensDirection(LensDirection lensDirection);
+
+  bool get enableDistortionCorrection;
+
+  Future<String> stopMovieRecording();
+
+  Future<void> startMovieRecording();
 }

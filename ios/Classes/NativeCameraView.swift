@@ -13,10 +13,12 @@ import UIKit
 class FLNativeViewFactory: NSObject, FlutterPlatformViewFactory {
     private var methodChannel: FlutterMethodChannel
     private var eventChannel: FlutterEventChannel
+    private var objectChangedEventChannel: FlutterEventChannel
 
-    init(methodChannel: FlutterMethodChannel, eventChannel: FlutterEventChannel) {
+    init(methodChannel: FlutterMethodChannel, eventChannel: FlutterEventChannel, objectChangedEventChannel: FlutterEventChannel) {
         self.methodChannel = methodChannel
         self.eventChannel = eventChannel
+        self.objectChangedEventChannel = objectChangedEventChannel
         super.init()
     }
 
@@ -28,8 +30,8 @@ class FLNativeViewFactory: NSObject, FlutterPlatformViewFactory {
         FLNativeView(
                 frame: frame,
                 viewIdentifier: viewId,
-                arguments: args as! [String: Any]?,
-                methodChannel: methodChannel, eventChannel: eventChannel
+                arguments: args as! [String: Any],
+                methodChannel: methodChannel, eventChannel: eventChannel, objectChangedEventChannel: objectChangedEventChannel
         )
     }
 
@@ -47,67 +49,97 @@ class FLNativeView: NSObject, FlutterPlatformView {
     private var scannerController: ScannerController?
     private var methodChannel: FlutterMethodChannel!
     private var eventChannel: FlutterEventChannel!
+    private var objectChangedEventChannel: FlutterEventChannel!
     private let imageStreamHandler: ImageStreamHandler!
+    private let onObjectDetectedChangedStreamHandler: ObjectDetectedChangedHandler!
 
     @available(iOS 11.1, *)
     init(
             frame: CGRect,
             viewIdentifier viewId: Int64,
-            arguments args: [String: Any]?,
+            arguments args: [String: Any],
             methodChannel: FlutterMethodChannel,
-            eventChannel: FlutterEventChannel
+            eventChannel: FlutterEventChannel,
+            objectChangedEventChannel: FlutterEventChannel
     ) {
         _view = UIView()
         self.eventChannel = eventChannel
         self.methodChannel = methodChannel
+        self.objectChangedEventChannel = objectChangedEventChannel
         imageStreamHandler = ImageStreamHandler()
-        var lensDirection: LensDirection;
-        switch (args!["lensDirection"] as! String) {
-        case "front": lensDirection = .front
-        case "back": lensDirection = .back
-        default:
-            print("no lens direction was provided, defaulting to front")
-            lensDirection = .front
-        }
-        scannerController = ScannerController(lensDirection: lensDirection)
+        let cameraOptions = FLNativeView.parseCameraOptions(args: args)
+        scannerController = ScannerController(cameraOptions: cameraOptions)
+        onObjectDetectedChangedStreamHandler = ObjectDetectedChangedHandler(scannerController: scannerController!)
         super.init()
 
-        self.createNativeView(view: self.view())
+        createNativeView(view: view())
 
         self.eventChannel.setStreamHandler(self.imageStreamHandler)
+        self.objectChangedEventChannel.setStreamHandler(self.onObjectDetectedChangedStreamHandler)
         self.methodChannel.setMethodCallHandler({
             (call, result) in
-            switch (call.method) {
-            case "startImageStream":
-                self.startImageStream()
-                result("")
-            case "stopImageStream":
-                self.stopImageStream()
-                result("")
-            case "previewSize":
-                result(self.getPreviewSize())
-            case "takePicture":
-                self.snapshot({
-                    data in
-                    result(data)
-                })
-            case "get_face_id_sensor_data":
-                self.faceIdSensorDataSnapshot({
-                    data in
-                    result(data)
-                })
-            case "get_calibration_data":
-                self.calibrationDataSnapshot({
-                    data in
-                    result(data)
-                })
-            case "dispose":
-                self.dispose {
-                    result(nil);
+            do {
+                switch (call.method) {
+                case "startImageStream":
+                    self.startImageStream()
+                    result("")
+                case "stopImageStream":
+                    self.stopImageStream()
+                    result("")
+                case "startObjectDetection":
+                    self.startObjectDetectedChangedStream()
+                    result("")
+                case "stopObjectDetection":
+                    self.stopObjectDetectedChangedStream()
+                    result("")
+                case "previewSize":
+                    result(self.getPreviewSize())
+                case "takePicture":
+                    self.snapshot({
+                        data in
+                        result(data)
+                    })
+                case "get_face_id_sensor_data":
+                    self.faceIdSensorDataSnapshot({
+                        data in
+                        result(data)
+                    })
+                case "get_calibration_data":
+                    self.calibrationDataSnapshot({
+                        data in
+                        result(data)
+                    })
+                case "get_depth_values":
+                    self.depthValuesSnapshot({
+                        data in
+                        result(data)
+                    })
+                case "dispose":
+                    self.dispose {
+                        result(nil);
+                    }
+                case "change_lens_direction":
+                    let lensDirection = FLNativeView.parseLensDirection(args: call.arguments as? [String: Any])
+                    self.scannerController!.changeLensDirection(lensDirection)
+                    result("")
+                case "start_movie_recording":
+                    self.scannerController!.startMovieRecording()
+                    result(nil)
+                case "stop_movie_recording":
+                    self.scannerController!.stopMovieRecording { url, error in
+                        if let error = error {
+                            result(FlutterError(code: "\(error._code)", message: error.localizedDescription, details: nil))
+                            return
+                        }
+                        result(url.absoluteURL.absoluteString)
+                    }
+                default:
+                    result(FlutterError())
                 }
-            default:
+            } catch {
                 result(FlutterError())
             }
+
 
         })
 
@@ -127,8 +159,82 @@ class FLNativeView: NSObject, FlutterPlatformView {
 
     }
 
+    private static func parseLensDirection(args: [String: Any]?) -> LensDirection {
+        var lensDirection: LensDirection;
+        switch (args!["lensDirection"] as! String) {
+        case "front": lensDirection = .front
+        case "back": lensDirection = .back
+        default:
+            print("no lens direction was provided, defaulting to front")
+            lensDirection = .front
+        }
+        return lensDirection;
+    }
+
+    private static func parseObjectDetectionRange(args: [String: Any]) -> ObjectDetectionOptions {
+        let options: [String: Any] = args["objectDetectionOptions"] as! [String: Any];
+        let minDepth: Double = Double(truncating: options["minDepth"] as! NSNumber)
+        let maxDepth: Double = Double(truncating: options["maxDepth"] as! NSNumber)
+        let centerWidthStart: Double = Double(truncating: options["centerWidthStart"] as! NSNumber)
+        let centerWidthEnd: Double = Double(truncating: options["centerWidthEnd"] as! NSNumber)
+        let centerHeightStart: Double = Double(truncating: options["centerHeightStart"] as! NSNumber)
+        let centerHeightEnd: Double = Double(truncating: options["centerHeightEnd"] as! NSNumber)
+        let minCoverage: Double = Double(truncating: options["minCoverage"] as! NSNumber)
+        return ObjectDetectionOptions(
+                minDepth: minDepth,
+                maxDepth: maxDepth,
+                centerWidthStart: centerWidthStart,
+                centerWidthEnd: centerWidthEnd,
+                centerHeightStart: centerHeightStart,
+                centerHeightEnd: centerHeightEnd,
+                minCoverage: minCoverage
+        )
+    }
+
+    private static func parseCameraOptions(args: [String: Any]) -> CameraOptions {
+        let lensDirection: LensDirection = FLNativeView.parseLensDirection(args: args)
+        let enableDistortionCorrection: Bool = args["enableDistortionCorrection"] as! Bool
+        let objectDetectionRange = FLNativeView.parseObjectDetectionRange(args: args)
+        let preferredResolution: PreferredResolution!
+        let rawRes = args["preferredResolution"] as! String
+        switch rawRes {
+        case "x1920x1080":
+            preferredResolution = PreferredResolution.x1920x1080
+        case "x640x480":
+            preferredResolution = PreferredResolution.x640x480
+        default:
+            print("Encountered unknown resolution: \(rawRes)")
+            preferredResolution = PreferredResolution.x640x480
+        }
+        let rawFrameRate = args["preferredFrameRate"] as! String
+        let preferredFrameRate: PreferredFrameRate!
+
+        switch rawFrameRate {
+        case "fps24":
+            preferredFrameRate = PreferredFrameRate.fps24
+        case "fps30":
+            preferredFrameRate = PreferredFrameRate.fps30
+        case "fps60":
+            preferredFrameRate = PreferredFrameRate.fps60
+        case "fps120":
+            preferredFrameRate = PreferredFrameRate.fps120
+        case "fps240":
+            preferredFrameRate = PreferredFrameRate.fps240
+        default:
+            print("Encountered unknown frame rate: \(rawFrameRate)")
+            preferredFrameRate = PreferredFrameRate.fps30
+        }
+        return CameraOptions(
+                lensDirection: lensDirection,
+                enableDistortionCorrection: enableDistortionCorrection,
+                objectDetectionOptions: objectDetectionRange,
+                preferredFrameRate: preferredFrameRate,
+                preferredResolution: preferredResolution
+        )
+    }
+
     private func notifyAboutInitDone() {
-        self.methodChannel.invokeMethod("initDone", arguments: nil)
+        methodChannel.invokeMethod("initDone", arguments: nil)
     }
 
 
@@ -151,51 +257,62 @@ class FLNativeView: NSObject, FlutterPlatformView {
         ]
     }
 
-    func calibrationDataSnapshot(_ onData: @escaping ((Dictionary<String, Any?>) -> Void)) {
+    func calibrationDataSnapshot(_ onData: @escaping (Dictionary<String, Any?>) -> Void) {
         scannerController?.getCalibrationData { (data) in
-            let calibrationData = data
-            let pixelSize = NSNumber(value: calibrationData.pixelSize)
-            let iMatrix = calibrationData.intrinsicMatrix.columns;
-            let intrinsicMatrix = [
-                self.parseMatrixCol(iMatrix.0),
-                self.parseMatrixCol(iMatrix.1),
-                self.parseMatrixCol(iMatrix.2),
-            ]
-            let eMatrix = calibrationData.extrinsicMatrix.columns
-            let extrinsicMatrix: [Dictionary<String, NSNumber>] = [
-                self.parseMatrixCol(eMatrix.0),
-                self.parseMatrixCol(eMatrix.1),
-                self.parseMatrixCol(eMatrix.2),
-                self.parseMatrixCol(eMatrix.3),
-            ]
-            let intrinsicMatrixReferenceDimensionsData = calibrationData.intrinsicMatrixReferenceDimensions
-            let intrinsicMatrixReferenceDimensions: Dictionary<String, NSNumber> = [
-                "width": NSNumber(value: intrinsicMatrixReferenceDimensionsData.width),
-                "height": NSNumber(value: intrinsicMatrixReferenceDimensionsData.height),
-            ]
-            let lensDistortionCenterData = calibrationData.lensDistortionCenter
-            let lensDistortionCenter: Dictionary<String, NSNumber> = [
-                "x": NSNumber(value: lensDistortionCenterData.x),
-                "y": NSNumber(value: lensDistortionCenterData.y),
-            ]
-            let lensDistortionLookupTableData = calibrationData.lensDistortionLookupTable
-            let lensDistortionLookupTable = FlutterStandardTypedData(bytes: Data(lensDistortionLookupTableData!.map { point in
-                point
-            }))
-
-            onData([
-                "intrinsicMatrix": intrinsicMatrix,
-                "intrinsicMatrixReferenceDimensions": intrinsicMatrixReferenceDimensions,
-                "extrinsicMatrix": extrinsicMatrix,
-                "pixelSize": pixelSize,
-                "lensDistortionLookupTable": lensDistortionLookupTable,
-                "lensDistortionCenter": lensDistortionCenter
-            ]);
+            let encodedData = self.encodeCameraCalibrationData(data: data)
+            onData(encodedData);
         }
     }
 
+    private func encodeCameraCalibrationData(data: AVCameraCalibrationData) -> [String: Any] {
+        let calibrationData = data
+        let pixelSize = NSNumber(value: calibrationData.pixelSize)
+        let iMatrix = calibrationData.intrinsicMatrix.columns;
+        let intrinsicMatrix = [
+            parseMatrixCol(iMatrix.0),
+            parseMatrixCol(iMatrix.1),
+            parseMatrixCol(iMatrix.2),
+        ]
+        let eMatrix = calibrationData.extrinsicMatrix.columns
+        let extrinsicMatrix: [Dictionary<String, NSNumber>] = [
+            parseMatrixCol(eMatrix.0),
+            parseMatrixCol(eMatrix.1),
+            parseMatrixCol(eMatrix.2),
+            parseMatrixCol(eMatrix.3),
+        ]
+        let intrinsicMatrixReferenceDimensionsData = calibrationData.intrinsicMatrixReferenceDimensions
+        let intrinsicMatrixReferenceDimensions: Dictionary<String, NSNumber> = [
+            "width": NSNumber(value: intrinsicMatrixReferenceDimensionsData.width),
+            "height": NSNumber(value: intrinsicMatrixReferenceDimensionsData.height),
+        ]
+        let lensDistortionCenterData = calibrationData.lensDistortionCenter
+        let lensDistortionCenter: Dictionary<String, NSNumber> = [
+            "x": NSNumber(value: lensDistortionCenterData.x),
+            "y": NSNumber(value: lensDistortionCenterData.y),
+        ]
+        let lensDistortionLookupTableData = calibrationData.lensDistortionLookupTable
+        let lensDistortionLookupTable = FlutterStandardTypedData(bytes: Data(lensDistortionLookupTableData!.map { point in
+            point
+        }))
+        let inverseLensDistortionLookupTableData =
+                FlutterStandardTypedData(bytes: Data(calibrationData.inverseLensDistortionLookupTable!.map { point in
+                    point
+                }))
+
+        let encodedData: Dictionary<String, Any> = [
+            "intrinsicMatrix": intrinsicMatrix,
+            "intrinsicMatrixReferenceDimensions": intrinsicMatrixReferenceDimensions,
+            "extrinsicMatrix": extrinsicMatrix,
+            "pixelSize": pixelSize,
+            "lensDistortionLookupTable": lensDistortionLookupTable,
+            "lensDistortionCenter": lensDistortionCenter,
+            "inverseLensDistortionLookupTable": inverseLensDistortionLookupTableData
+        ]
+        return encodedData
+    }
+
     func parseMatrixCol(_ col: simd_float3) -> Dictionary<String, NSNumber> {
-        return [
+        [
             "x": NSNumber(value: col.x),
             "y": NSNumber(value: col.y),
             "z": NSNumber(value: col.z)
@@ -206,6 +323,15 @@ class FLNativeView: NSObject, FlutterPlatformView {
         scannerController!.getFaceIdSensorDataSnapshot { data in
             let encoded = self.encodeFaceIdSensorData(data)
             onData(encoded)
+        }
+    }
+
+    func depthValuesSnapshot(_ onData: @escaping (Any) -> Void) -> Void {
+        scannerController!.getDepthValuesSnapshot { data in
+
+            onData(FlutterStandardTypedData(float32: Data(data.flatMap {
+                $0.bytes
+            })))
         }
     }
 
@@ -231,6 +357,24 @@ class FLNativeView: NSObject, FlutterPlatformView {
 
     }
 
+    func startObjectDetectedChangedStream() {
+        if (disposed) {
+            return;
+        }
+
+        scannerController?.setOnObjectCoverageChangeListener({ (detected) in
+            self.onObjectDetectedChangedStreamHandler.add(detected)
+        })
+    }
+
+    func stopObjectDetectedChangedStream() {
+        if (disposed) {
+            return;
+        }
+        scannerController?.removeOnObjectCoverageChangedListener()
+    }
+
+
     func startImageStream() {
         if (disposed) {
             return;
@@ -251,13 +395,19 @@ class FLNativeView: NSObject, FlutterPlatformView {
                 Float64($0).bytes
             }
         }))
-
+        let depthValues = FlutterStandardTypedData(float32: Data(
+                data.depthValues.flatMap {
+                    $0.bytes
+                }
+        ))
+        let calibrationData = encodeCameraCalibrationData(data: data.cameraCalibrationData)
         return [
             "width": width,
             "height": height,
             "xyz": xyz,
-            "rgb": rgb
-
+            "rgb": rgb,
+            "depthValues": depthValues,
+            "cameraCalibrationData": calibrationData
         ]
     }
 
@@ -303,6 +453,47 @@ class FLNativeView: NSObject, FlutterPlatformView {
 
     }
 }
+
+class ObjectDetectedChangedHandler: NSObject, FlutterStreamHandler {
+
+
+    private var eventSink: FlutterEventSink?
+
+    private var scannerController: ScannerController
+
+    init(scannerController: ScannerController) {
+        self.scannerController = scannerController
+    }
+
+    func add(_ detected: ObjectDetectionResult) {
+        let encoded: Dictionary<String, NSInteger> = [
+            "belowLowerBound": NSInteger(detected.belowLowerBound),
+            "aboveUpperBound": NSInteger(detected.aboveUpperBound),
+            "leftOfBound": NSInteger(detected.leftOfBound),
+            "rightOfBound": NSInteger(detected.rightOfBound),
+            "aboveBound": NSInteger(detected.aboveBound),
+            "belowBound": NSInteger(detected.belowBound),
+            "insideBound": NSInteger(detected.insideBound),
+            "boundPointCount": NSInteger(detected.boundPointCount),
+        ]
+        eventSink?(encoded)
+    }
+
+    func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+        eventSink = events
+        return nil;
+    }
+
+    func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        cancelListener()
+        return nil;
+    }
+
+    func cancelListener() {
+        scannerController.removeOnObjectCoverageChangedListener()
+    }
+}
+
 
 class ImageStreamHandler: NSObject, FlutterStreamHandler {
 

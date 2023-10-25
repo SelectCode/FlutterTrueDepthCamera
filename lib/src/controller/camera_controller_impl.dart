@@ -2,26 +2,39 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:clock/clock.dart';
-import 'package:cv_camera/src/controller/camera_controller.dart';
-import 'package:cv_camera/src/models/calibration_data/calibration_data.dart';
-import 'package:cv_camera/src/utils/image_builder.dart';
+import 'package:cv_camera/src/misc/pitch/pitch.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../models/models.dart';
+import '../../cv_camera.dart';
 
 class CameraControllerImpl implements CameraController {
   @visibleForTesting
   late final MethodChannel methodChannel;
   final EventChannel eventChannel;
+  final EventChannel objectDetectionEventChannel;
+
+  LensDirection _lensDirection;
+
+  @override
+  final ObjectDetectionOptions objectDetectionOptions;
+
+  @override
+  final bool enableDistortionCorrection;
+
+  @override
+  final PreferredFrameRate preferredFrameRate;
+
+  @override
+  final PreferredResolution preferredResolution;
 
   /// Determines which lens the camera uses.
   @override
-  late final LensDirection lensDirection;
+  LensDirection get lensDirection => _lensDirection;
   @visibleForTesting
-  late final Clock clock;
+  final Clock clock;
 
   /// The size of the current camera preview.
   ///
@@ -33,10 +46,24 @@ class CameraControllerImpl implements CameraController {
     LensDirection? lensDirection,
     required this.eventChannel,
     required this.methodChannel,
+    required this.objectDetectionEventChannel,
+    ObjectDetectionOptions? objectDetectionOptions,
+    this.enableDistortionCorrection = true,
+    required this.preferredFrameRate,
+    required this.preferredResolution,
     Clock? clock,
-  }) {
-    this.clock = clock ?? const Clock();
-    this.lensDirection = lensDirection ?? LensDirection.front;
+  })  : _lensDirection = lensDirection ?? LensDirection.front,
+        clock = clock ?? const Clock(),
+        objectDetectionOptions = objectDetectionOptions ??
+            const ObjectDetectionOptions(
+              minDepth: 0.15,
+              maxDepth: 0.5,
+              centerWidthStart: 0.3,
+              centerWidthEnd: 0.7,
+              centerHeightStart: 0.3,
+              centerHeightEnd: 0.7,
+              minCoverage: 0.5,
+            ) {
     methodChannel.setMethodCallHandler((call) async {
       switch (call.method) {
         case "initDone":
@@ -55,6 +82,7 @@ class CameraControllerImpl implements CameraController {
     final width = sizeResponse["width"] as num;
     final height = sizeResponse["height"] as num;
     previewSize = Size(width.toDouble(), height.toDouble());
+    _pitchService.startListening();
   }
 
   bool _isStreaming = false;
@@ -115,7 +143,7 @@ class CameraControllerImpl implements CameraController {
     final bytes = imageBuilder.asJpg();
     final writtenFile = (await imageFile.writeAsBytes(bytes));
     final path = writtenFile.path;
-
+    print(response['depthData'].runtimeType);
     final decoded =
         TakePictureResult.fromJson(response..addAll({'path': path}));
 
@@ -123,10 +151,15 @@ class CameraControllerImpl implements CameraController {
   }
 
   @override
-  Future<TakePictureResult> takePicture() async {
+  Future<TakePictureResult> takePicture({bool saveImage = false}) async {
     await readyCompleter.future;
-    final response = Map<String, dynamic>.from(
-        await methodChannel.invokeMethod("takePicture"));
+    final data = await methodChannel.invokeMethod("takePicture");
+    final response = Map<String, dynamic>.from(data)
+      ..addAll({'pitch': (await _getCurrentPitch()).toJson()});
+    if (!saveImage) {
+      final result = TakePictureResult.fromJson(response);
+      return result;
+    }
     return await compute<PictureHandlerParams, TakePictureResult>(
       _savePictureHandler,
       PictureHandlerParams(
@@ -135,6 +168,12 @@ class CameraControllerImpl implements CameraController {
         clock: clock,
       ),
     );
+  }
+
+  final PitchService _pitchService = PitchService();
+
+  Future<CameraPitch> _getCurrentPitch() async {
+    return await _pitchService.getPitch();
   }
 
   /// Is `true` when controller is initialized and ready to be operated on.
@@ -154,7 +193,8 @@ class CameraControllerImpl implements CameraController {
   @override
   Future<void> dispose() async {
     await stopImageStream();
-    methodChannel.invokeMethod('dispose');
+    await methodChannel.invokeMethod('dispose');
+    _pitchService.stopListening();
   }
 
   @override
@@ -173,12 +213,74 @@ class CameraControllerImpl implements CameraController {
     return FaceIdSensorData.fromJson(response);
   }
 
+
   @override
-  Stream<FaceIdSensorData> getFaceIdSensorDataStream(int interval) {
-    return Stream.periodic(Duration(milliseconds: interval), (i) async {
-      return await getFaceIdSensorData();
-    }).asyncMap((event) => event);
+  Future<List<double>> getDepthValues() async {
+    final result =
+        await methodChannel.invokeMethod<Float32List>("get_depth_values");
+    return result!.toList();
   }
+
+  bool _isDetecting = false;
+
+  @override
+  Future<Stream<ObjectDetectionResult>> startObjectCoverageStream() async {
+    await readyCompleter.future;
+
+    if (_isDetecting) {
+      throw Exception("Object stream is already running.");
+    }
+
+    await methodChannel.invokeMethod("startObjectDetection");
+    _isDetecting = true;
+    return objectDetectionEventChannel.receiveBroadcastStream().map((event) {
+      return ObjectDetectionResult.fromJson(Map<String, dynamic>.from(event));
+    });
+  }
+
+  @override
+  Future<void> stopObjectCoverageStream() async {
+    await readyCompleter.future;
+    if (!_isDetecting) return;
+
+    await methodChannel.invokeMethod("stopObjectDetection");
+    _isDetecting = false;
+  }
+
+  @override
+  Future<void> setLensDirection(LensDirection lensDirection) async {
+    await readyCompleter.future;
+    await methodChannel.invokeMethod("change_lens_direction", {
+      "lensDirection": lensDirection.value,
+    });
+    _lensDirection = lensDirection;
+  }
+
+  bool _isRecordingMovie = false;
+
+  @override
+  Future<void> startMovieRecording() async {
+    if(_isRecordingMovie) {
+      throw Exception("Already recording movie");
+    }
+    await readyCompleter.future;
+    await methodChannel.invokeMethod("start_movie_recording");
+    _isRecordingMovie = true;
+  }
+
+  @override
+  Future<String> stopMovieRecording() async {
+    if(!_isRecordingMovie) {
+      throw Exception("Not recording movie");
+    }
+    final url = await methodChannel.invokeMethod<String>("stop_movie_recording");
+    _isRecordingMovie = false;
+    if(url == null) {
+      throw Exception("Could not stop recording");
+    }
+    return url;
+  }
+
 }
 
 /// Params that are passed to [CameraControllerImpl._savePictureHandler].

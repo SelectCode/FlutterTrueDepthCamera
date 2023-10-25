@@ -12,8 +12,8 @@ import SceneKit
 import VideoToolbox
 import CoreGraphics
 
+class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureFileOutputRecordingDelegate {
 
-class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
     private enum SessionSetupResult {
         case success
         case notAuthorized
@@ -26,34 +26,42 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     private let imageDecodingQueue = DispatchQueue(label: "image decoding queue", qos: .userInitiated, attributes: [], autoreleaseFrequency: .workItem)
     private let sessionQueue = DispatchQueue(label: "session queue", attributes: [], autoreleaseFrequency: .workItem)
     private let pointCloudQueue = DispatchQueue(label: "point cloud queue", attributes: [], autoreleaseFrequency: .workItem)
+    private let objectDetectionQueue = DispatchQueue(label: "object detection queue", attributes: [], autoreleaseFrequency: .workItem)
 
     private let session = AVCaptureSession()
     private var videoDeviceInput: AVCaptureDeviceInput!
-    private let videoDeviceDiscoverySession: AVCaptureDevice.DiscoverySession!
-    public let canUseDepthCamera: Bool!
+    public var canUseDepthCamera: Bool!
+    private let cameraOptions: CameraOptions!
+    private let movieOutput = AVCaptureMovieFileOutput()
 
     @available(iOS 11.1, *)
-    init(lensDirection: LensDirection) {
+    init(cameraOptions: CameraOptions!) {
+        self.cameraOptions = cameraOptions
 
-        var position: AVCaptureDevice.Position
-        var deviceTypes: [AVCaptureDevice.DeviceType]
-        // Determine which lensDirection should be used and set the [deviceTypes] accordingly.
-        switch (lensDirection) {
-        case .front: position = .front
-            deviceTypes = [.builtInTrueDepthCamera]
-            canUseDepthCamera = true
-        case .back: position = .back
-            canUseDepthCamera = false
-            deviceTypes = [.builtInWideAngleCamera]
-
-        }
-        self.videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes,
-                mediaType: .video,
-                position: position);
         super.init();
+        self.setDeviceDiscoverySession(lensDirection: cameraOptions.lensDirection)
 
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(handleNotification(_:)), name: .AVCaptureSessionRuntimeError, object: session)
+
+    }
+
+    func changeLensDirection(_ lensDirection: LensDirection) {
+        sessionQueue.async {
+            self.session.stopRunning()
+            self.session.inputs.forEach { input in
+                self.session.removeInput(input)
+            }
+            self.session.outputs.forEach { output in
+                self.session.removeOutput(output)
+            }
+            self.setDeviceDiscoverySession(lensDirection: lensDirection)
+            self.configureSession()
+            self.session.startRunning()
+        }
+    }
+
+    fileprivate func setDeviceDiscoverySession(lensDirection: LensDirection) {
 
     }
 
@@ -75,6 +83,10 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     private var snapshotCallback: ((FaceIdData, NativeCameraImage) -> Void)?
     private var calibrationCallback: ((AVCameraCalibrationData) -> Void)?
     private var faceIdSensorDataCallback: ((FaceIdData) -> Void)?
+    private var depthValuesCallback: (([Float32]) -> Void)?
+    private var onObjectCoverageChange: ((ObjectDetectionResult) -> Void)?
+    private var onMovieRecordStop: ((URL, Error?) -> Void)?
+
 
     func getCalibrationData(_ callback: @escaping (AVCameraCalibrationData) -> Void) {
         calibrationCallback = callback
@@ -84,11 +96,25 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
         faceIdSensorDataCallback = callback
     }
 
+    func getDepthValuesSnapshot(_ callback: @escaping ([Float32]) -> Void) {
+        depthValuesCallback = callback
+    }
+
+
     /// Returns [FaceIdData] and a [NativeCameraImage] for the next processed frame.
     func getSnapshot(_ callback: @escaping (FaceIdData, NativeCameraImage) -> Void) {
 
         snapshotCallback = callback
     }
+
+    func setOnObjectCoverageChangeListener(_ callback: @escaping (ObjectDetectionResult) -> Void) {
+        onObjectCoverageChange = callback
+    }
+
+    func removeOnObjectCoverageChangedListener() {
+        onObjectCoverageChange = nil
+    }
+
 
     /// Starts setup for camera.
     func prepare(_ callback: @escaping (Error?) -> Void) {
@@ -108,10 +134,10 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     /// Stops preview.
     func stop(_ callback: ((Error?) -> ())) {
         do {
-            self.previewLayer?.removeFromSuperlayer()
-            self.session.stopRunning()
+            previewLayer?.removeFromSuperlayer()
+            session.stopRunning()
 
-            self.previewLayer = nil
+            previewLayer = nil
             callback(nil)
         } catch let error {
             callback(error);
@@ -207,6 +233,26 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
                 return
             }
 
+            guard let depthValues = depthData.depthDataMap.depthValues() else {
+                return
+            }
+
+
+            if (self.onObjectCoverageChange != nil) {
+                self.objectDetectionQueue.async {
+                    let width = CVPixelBufferGetWidth(videoPixelBuffer)
+                    let height = CVPixelBufferGetHeight(videoPixelBuffer)
+                    let result = self.checkForObject(depthValues: depthValues, width: width, height: height)
+                    if (self.onObjectCoverageChange != nil) {
+                        self.onObjectCoverageChange!(result)
+                    }
+                }
+            }
+
+            if (self.depthValuesCallback != nil) {
+                self.depthValuesCallback!(depthValues)
+            }
+
             if (self.bytesCallback != nil) {
                 self.bytesCallback!(self.getNativeCameraImage(sampleBuffer: sampleBuffer))
                 self.bytesCallback = nil
@@ -231,16 +277,69 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
             }
         }
+    }
+
+    func checkForObject(depthValues: [Float32], width: Int, height: Int) -> ObjectDetectionResult {
+        let detectionOptions = cameraOptions.objectDetectionOptions
+        let widthRange = Int(Double(width) * detectionOptions.centerHeightStart)...Int(Double(width) * detectionOptions.centerWidthEnd)
+        let heightRange = Int(Double(height) * detectionOptions.centerHeightStart)...Int(Double(height) * detectionOptions.centerHeightEnd)
+        let centerCount = (widthRange.upperBound - widthRange.lowerBound) * (heightRange.upperBound - heightRange.lowerBound)
+        let depthRange = detectionOptions.minDepth...detectionOptions.maxDepth
+        var result = ObjectDetectionResult(
+                belowLowerBound: 0,
+                aboveUpperBound: 0,
+                leftOfBound: 0,
+                rightOfBound: 0,
+                aboveBound: 0,
+                belowBound: 0,
+                insideBound: 0,
+                boundPointCount: centerCount
+        );
 
 
+        for (i, raw) in depthValues.enumerated() {
+            let x = i % width
+            let y = i / width
+            let value = Double(raw);
+
+            if (widthRange.contains(x) && heightRange.contains(y)) {
+                if (depthRange.contains(value)) {
+                    result.insideBound += 1;
+                } else {
+                    if (value < depthRange.lowerBound) {
+                        result.belowLowerBound += 1;
+                    } else if (value > depthRange.upperBound && value < depthRange.upperBound * 1.5) {
+                        result.aboveUpperBound += 1;
+                    }
+                }
+
+            } else {
+                if (!depthRange.contains(value)) {
+                    continue;
+                }
+                if (x < widthRange.lowerBound) {
+                    result.leftOfBound += 1;
+                } else if (x > widthRange.upperBound) {
+                    result.rightOfBound += 1;
+                }
+                if (y < heightRange.lowerBound) {
+                    result.belowBound += 1;
+                } else if (y > heightRange.upperBound) {
+                    result.aboveBound += 1;
+                }
+            }
+
+        }
+
+        return result;
     }
 
 
     /// Decodes an array of [Plane].
     private func decodePlanes(planes: [NSDictionary]) -> [Plane] {
-        return planes.map({
+        planes.map({
             plane in
-            return Plane(width: plane["width"] as! Int, height: plane["height"] as! Int, bytes: (plane["bytes"] as! Data).bytes, bytesPerRow: plane["bytesPerRow"] as! Int)
+            Plane(width: plane["width"] as! Int, height: plane["height"] as! Int, bytes: (plane["bytes"] as! Data).bytes, bytesPerRow: plane["bytesPerRow"] as! Int)
         })
     }
 
@@ -259,13 +358,22 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     ///
     /// Useful for hand measurements.
     func getPointCloud(depthData: AVDepthData, cgColorImage: CGImage, sampleBuffer: CMSampleBuffer) {
+        let copiedSnapshotCallback = snapshotCallback
+        let copiedFaceIdSensorDataCallback = faceIdSensorDataCallback
+        snapshotCallback = nil
+        faceIdSensorDataCallback = nil
         let depthPixelBuffer = depthData.depthDataMap
         let depthWidth = CVPixelBufferGetWidth(depthPixelBuffer)
+        let depthHeight = CVPixelBufferGetHeight(depthPixelBuffer)
 
 
-        //        guard let pixelDataColor = resizedColorImage.createCGImage().pixelData() else { fatalError() }
+        var undistortedBuffer: CVPixelBuffer? = nil
+        if (cameraOptions.enableDistortionCorrection) {
+            undistortedBuffer = undistortDepthValues(depthPixelBuffer: depthPixelBuffer, depthData: depthData, depthWidth: depthWidth, depthHeight: depthHeight)
+        }
 
-        let depthValues: [Float32]? = depthPixelBuffer.depthValues()
+
+        let depthValues: [Float32]? = (undistortedBuffer ?? depthPixelBuffer).depthValues()
         guard let depthValues = depthValues else {
             return
         }
@@ -276,20 +384,124 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
 
         let faceIdData = convertRGBDtoXYZ(colorImage: cgColorImage, depthValues: depthValues, depthWidth: depthWidth, cameraCalibrationData: cameraCalibrationData)
-        if (self.faceIdSensorDataCallback != nil) {
-            self.faceIdSensorDataCallback!(faceIdData)
-            self.faceIdSensorDataCallback = nil
+        print("Converted RGBD to XYZ.")
+        if (copiedFaceIdSensorDataCallback != nil) {
+            copiedFaceIdSensorDataCallback!(faceIdData)
         }
-        if (self.snapshotCallback != nil) {
-            self.snapshotCallback!(faceIdData, decodeNativeCameraImage(getNativeCameraImage(sampleBuffer: sampleBuffer)))
-            self.snapshotCallback = nil
+        if (copiedSnapshotCallback != nil) {
+            copiedSnapshotCallback!(faceIdData, decodeNativeCameraImage(getNativeCameraImage(sampleBuffer: sampleBuffer)))
+        }
+        print("Finished processing frame.")
+
+    }
+
+    private func undistortDepthValues(depthPixelBuffer: CVPixelBuffer, depthData: AVDepthData, depthWidth: Int, depthHeight: Int) -> CVPixelBuffer? {
+        // Undistort depth data using lensDistortionPointForPoint
+        var maybePixelBuffer: CVPixelBuffer? = nil
+        let format = CVPixelBufferGetPixelFormatType(depthPixelBuffer)
+//        assert(format == kCVPixelFormatType_420YpCbCr8Planar)
+        let status = CVPixelBufferCreate(nil, depthWidth, depthHeight, format, nil, &maybePixelBuffer)
+        guard status == kCVReturnSuccess, let undistortedBuffer = maybePixelBuffer else {
+            return nil
+        }
+        CVPixelBufferLockBaseAddress(depthPixelBuffer, .readOnly)
+        CVPixelBufferLockBaseAddress(undistortedBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        // map every point in depthPixelBuffer to undistortedBuffer using lensDistortionPointForPoint
+        let lensDistortionLookupTable = depthData.cameraCalibrationData!.lensDistortionLookupTable!
+        let opticalCenter = depthData.cameraCalibrationData!.lensDistortionCenter
+        print("opticalCenter \(opticalCenter)")
+        var changedPixelCount = 0
+        let depthImageSize = CGSize(width: depthWidth, height: depthHeight)
+
+
+        let source = CVPixelBufferGetBaseAddressOfPlane(depthPixelBuffer, 0)
+        let height = CVPixelBufferGetHeightOfPlane(depthPixelBuffer, 0)
+        let width = CVPixelBufferGetWidthOfPlane(depthPixelBuffer, 0)
+        let bytesPerRow = CVPixelBufferGetBytesPerRowOfPlane(depthPixelBuffer, 0)
+
+        let destination = CVPixelBufferGetBaseAddressOfPlane(undistortedBuffer, 0)
+
+        // loop over all points in plane
+        for y in 0..<height {
+
+            for x in 0..<width {
+                let offset = y * bytesPerRow + x * MemoryLayout<UInt8>.stride
+                let sourcePointer = source!.advanced(by: offset).assumingMemoryBound(to: UInt8.self)
+                let point = CGPoint(x: CGFloat(x), y: CGFloat(y))
+                let undistortedPoint = lensDistortionPoint(
+                        for: point,
+                        lookupTable: lensDistortionLookupTable,
+                        distortionOpticalCenter: opticalCenter,
+                        imageSize: depthImageSize
+                )
+                let undistortedX = Int(undistortedPoint.x)
+                let undistortedY = Int(undistortedPoint.y)
+                let destinationOffset = undistortedY * bytesPerRow + undistortedX * MemoryLayout<UInt8>.stride
+                if (destinationOffset >= bytesPerRow * height) {
+                    //todo: handle this
+                    continue
+                }
+                if (destinationOffset != offset) {
+                    changedPixelCount += 1
+                }
+                let destinationPointer = destination!.advanced(by: destinationOffset).assumingMemoryBound(to: UInt8.self)
+                destinationPointer.pointee = sourcePointer.pointee
+            }
+        }
+        print("Changed \(changedPixelCount) pixels out of \(depthWidth * depthHeight) pixels after undistortion.")
+
+        CVPixelBufferUnlockBaseAddress(depthPixelBuffer, .readOnly)
+        CVPixelBufferUnlockBaseAddress(undistortedBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        return undistortedBuffer
+    }
+
+    func lensDistortionPoint(for point: CGPoint, lookupTable: Data, distortionOpticalCenter opticalCenter: CGPoint, imageSize: CGSize) -> CGPoint {
+        // The lookup table holds the relative radial magnification for n linearly spaced radii.
+        // The first position corresponds to radius = 0
+        // The last position corresponds to the largest radius found in the image.
+
+        // Determine the maximum radius.
+        let delta_ocx_max = Float(max(opticalCenter.x, imageSize.width - opticalCenter.x))
+        let delta_ocy_max = Float(max(opticalCenter.y, imageSize.height - opticalCenter.y))
+        let r_max = sqrt(delta_ocx_max * delta_ocx_max + delta_ocy_max * delta_ocy_max)
+
+        // Determine the vector from the optical center to the given point.
+        let v_point_x = Float(point.x - opticalCenter.x)
+        let v_point_y = Float(point.y - opticalCenter.y)
+
+        // Determine the radius of the given point.
+        let r_point = sqrt(v_point_x * v_point_x + v_point_y * v_point_y)
+
+        // Look up the relative radial magnification to apply in the provided lookup table
+        let magnification: Float = lookupTable.withUnsafeBytes { (lookupTableValues: UnsafePointer<Float>) in
+            let lookupTableCount = lookupTable.count / MemoryLayout<Float>.size
+
+            if r_point < r_max {
+                // Linear interpolation
+                let val = r_point * Float(lookupTableCount - 1) / r_max
+                let idx = Int(val)
+                let frac = val - Float(idx)
+
+                let mag_1 = lookupTableValues[idx]
+                let mag_2 = lookupTableValues[idx + 1]
+
+                return (1.0 - frac) * mag_1 + frac * mag_2
+            } else {
+                return lookupTableValues[lookupTableCount - 1]
+            }
         }
 
+        // Apply radial magnification
+        let new_v_point_x = v_point_x + magnification * v_point_x
+        let new_v_point_y = v_point_y + magnification * v_point_y
+
+        // Construct output
+        return CGPoint(x: opticalCenter.x + CGFloat(new_v_point_x), y: opticalCenter.y + CGFloat(new_v_point_y))
     }
 
     /// Returns a decoded [NativeCameraImage] from a Map.
     func decodeNativeCameraImage(_ encoded: [String: Any]) -> NativeCameraImage {
-        return NativeCameraImage(planes: decodePlanes(planes: encoded["planes"] as! [NSDictionary]), height: encoded["height"] as! Int, width: encoded["width"] as! Int)
+        NativeCameraImage(planes: decodePlanes(planes: encoded["planes"] as! [NSDictionary]), height: encoded["height"] as! Int, width: encoded["width"] as! Int)
     }
 
     func convertRGBDtoXYZ(colorImage: CGImage, depthValues: [Float32], depthWidth: Int, cameraCalibrationData: AVCameraCalibrationData) -> FaceIdData {
@@ -319,20 +531,79 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             return [x, y, z]
         }
 
-        return FaceIdData(XYZ: xyz, RGB: rgb, width: Int32(colorImage.width), height: Int32(colorImage.height))
+        return FaceIdData(XYZ: xyz, RGB: rgb, depthValues: depthValues, width: Int32(colorImage.width), height: Int32(colorImage.height), cameraCalibrationData: cameraCalibrationData)
     }
 
 
     /// Sets up current capture session.
     private func configureSession() {
+        var position: AVCaptureDevice.Position
+        var deviceTypes: [AVCaptureDevice.DeviceType]
+        print(cameraOptions)
+        // Determine which lensDirection should be used and set the [deviceTypes] accordingly.
+        switch (cameraOptions.lensDirection) {
+        case .front: position = .front
+            if #available(iOS 11.1, *) {
+                deviceTypes = [.builtInTrueDepthCamera]
+            } else {
+                print("iOS 11.1 or higher is required for front camera")
+                deviceTypes = [.builtInWideAngleCamera]
+            }
+        case .back: position = .back
+            // only use lidar when ios version is greater or equal to 15.4
+
+            if #available(iOS 15.4, *) {
+                deviceTypes = [.builtInLiDARDepthCamera, .builtInDualCamera, .builtInTripleCamera, .builtInWideAngleCamera, .builtInDualWideCamera]
+            } else {
+                print("iOS 15.4 or higher is required for usage of LiDAR")
+                if #available(iOS 13.0, *) {
+                    deviceTypes = [.builtInDualCamera, .builtInTripleCamera, .builtInWideAngleCamera, .builtInDualWideCamera]
+                } else {
+                    print("Encountered unsupported ios version 😇")
+                    deviceTypes = []
+                }
+            }
+
+        }
+        let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes,
+                mediaType: .video,
+                position: position);
+
+
         if setupResult != .success {
             return
         }
 
-        let defaultVideoDevice: AVCaptureDevice? = videoDeviceDiscoverySession.devices.first
+        let captureDevices: [AVCaptureDevice] = videoDeviceDiscoverySession.devices
 
-        guard let videoDevice = defaultVideoDevice else {
-            print("Could not find any video device")
+        var currentFrameRate: PreferredFrameRate? = cameraOptions.preferredFrameRate
+        var videoDevice: AVCaptureDevice?
+        while videoDevice == nil && currentFrameRate != nil {
+            videoDevice = filterDevices(captureDevices: captureDevices, preferredFrameRate: currentFrameRate!)
+            if videoDevice == nil {
+                currentFrameRate = currentFrameRate!.previous()
+            }
+        }
+
+        guard let currentFrameRate = currentFrameRate, let videoDevice = videoDevice else {
+            print("Could not find any video device.")
+            return
+        }
+
+
+        if currentFrameRate != cameraOptions.preferredFrameRate {
+            print("Could not find any video device matching the preferred framerate. Using \(currentFrameRate) instead")
+        }
+
+        canUseDepthCamera = videoDevice.activeDepthDataFormat != nil
+
+
+        guard let format = videoDevice.formats.filter({
+                    $0.videoSupportedFrameRateRanges.contains(where: { Int($0.maxFrameRate) >= cameraOptions.preferredFrameRate.frameRate() })
+                })
+                .first
+        else {
+            print("No video device format found for framerate \(cameraOptions.preferredFrameRate.frameRate())")
             setupResult = .configurationFailed
             return
         }
@@ -345,10 +616,14 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             return
         }
 
+
         session.beginConfiguration()
-
-        session.sessionPreset = AVCaptureSession.Preset.vga640x480
-
+        switch cameraOptions.preferredResolution {
+        case .x1920x1080:
+            session.sessionPreset = AVCaptureSession.Preset.hd1920x1080
+        case .x640x480:
+            session.sessionPreset = AVCaptureSession.Preset.vga640x480
+        }
         // Add a video input
         guard session.canAddInput(videoDeviceInput) else {
             print("Could not add video device input to the session")
@@ -357,6 +632,31 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             return
         }
         session.addInput(videoDeviceInput)
+
+        do {
+            try videoDevice.lockForConfiguration()
+            var bestFrameRateRange: AVFrameRateRange?
+            for range in format.videoSupportedFrameRateRanges {
+                print(range)
+                if (bestFrameRateRange == nil) {
+                    bestFrameRateRange = range
+                } else if range.maxFrameRate > bestFrameRateRange!.maxFrameRate {
+                    bestFrameRateRange = range
+                }
+            }
+            print(bestFrameRateRange!.minFrameDuration)
+            videoDevice.activeFormat = format
+            videoDevice.activeVideoMinFrameDuration = bestFrameRateRange!.minFrameDuration
+            videoDevice.activeVideoMaxFrameDuration = bestFrameRateRange!.minFrameDuration
+
+            videoDevice.unlockForConfiguration()
+        } catch {
+            print("Could not lock device for configuration: \(error)")
+            setupResult = .configurationFailed
+            return
+        }
+
+        print("Using camera: \(videoDevice.localizedName) with format: \(videoDevice.activeFormat)")
 
         // Add a video data output
         if session.canAddOutput(videoDataOutput) {
@@ -367,6 +667,12 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             setupResult = .configurationFailed
             session.commitConfiguration()
             return
+        }
+
+        if (session.canAddOutput(movieOutput)) {
+            session.addOutput(movieOutput)
+        } else {
+            print("Could not add movieOutput to the session")
         }
 
         // Configuration needs to be different in order to use the depth camera.
@@ -418,5 +724,38 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             videoDataOutput.setSampleBufferDelegate(self, queue: dataOutputQueue)
         }
         session.commitConfiguration()
+    }
+
+    private func filterDevices(captureDevices: [AVCaptureDevice], preferredFrameRate: PreferredFrameRate) -> AVCaptureDevice? {
+        captureDevices.first { device in
+            device.formats.contains {
+                $0.videoSupportedFrameRateRanges.contains(where: {
+                    Int($0.maxFrameRate) >= preferredFrameRate.frameRate()
+                })
+            }
+        }
+    }
+
+    func startMovieRecording(
+
+    ) {
+        let filePath = NSTemporaryDirectory() + "tempMovie.mov"
+        let outputURL = URL(fileURLWithPath: filePath)
+        movieOutput.startRecording(to: outputURL, recordingDelegate: self)
+    }
+
+    func stopMovieRecording(
+            _ callback: @escaping (URL, Error?) -> Void
+    ) {
+        onMovieRecordStop = callback
+        movieOutput.stopRecording()
+    }
+
+    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
+        print("Finished Recording")
+        if let callback = onMovieRecordStop {
+            callback(outputFileURL, error)
+            onMovieRecordStop = nil
+        }
     }
 }

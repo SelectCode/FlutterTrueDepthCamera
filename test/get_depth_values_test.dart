@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cv_camera/cv_camera.dart';
 import 'package:cv_camera/cv_camera_method_channel.dart';
 import 'package:flutter/services.dart';
@@ -10,32 +12,33 @@ import 'utils/set_up_camera_controller.dart';
 void main() {
   late CameraController sut;
   late MethodCallTracker tracker;
+  final depthValues = Float32List.fromList([1.0]);
   setUp(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     final platform = MethodChannelCvCamera();
     tracker = setCameraMockMethodCallHandler(
       platform.methodChannel,
       (call) async {
-        if (call.method == 'get_face_id_sensor_data') {
-          return TakePictureTestResources.depthDataJson;
+        if (call.method == 'get_depth_values') {
+          return depthValues;
         }
       },
     );
     sut = await setUpCameraController(platform: platform);
   });
 
-  test('should call get_face_id_sensor_data', () async {
-    await sut.getFaceIdSensorData();
+  test('should call get_depth_values', () async {
+    await sut.getDepthValues();
     expect(
       tracker.calls,
       contains(
-        predicate<MethodCall>((p0) => p0.method == 'get_face_id_sensor_data'),
+        predicate<MethodCall>((p0) => p0.method == 'get_depth_values'),
       ),
     );
   });
 
-  test('should return correct FaceIdSensorData', () async {
-    final result = await sut.getFaceIdSensorData();
-    expect(result, TakePictureTestResources.depthDataSerialized);
+  test('should return correct DepthValues', () async {
+    final result = await sut.getDepthValues();
+    expect(result, TakePictureTestResources.depthDataSerialized.depthValues);
   });
 }
