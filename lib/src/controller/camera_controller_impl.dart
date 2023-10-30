@@ -42,6 +42,9 @@ class CameraControllerImpl implements CameraController {
   @override
   late Size previewSize;
 
+  @override
+  final bool useDepthCamera;
+
   CameraControllerImpl({
     LensDirection? lensDirection,
     required this.eventChannel,
@@ -51,6 +54,7 @@ class CameraControllerImpl implements CameraController {
     this.enableDistortionCorrection = true,
     required this.preferredFrameRate,
     required this.preferredResolution,
+    required this.useDepthCamera,
     Clock? clock,
   })  : _lensDirection = lensDirection ?? LensDirection.front,
         clock = clock ?? const Clock(),

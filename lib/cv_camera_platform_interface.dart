@@ -31,5 +31,6 @@ abstract class CvCameraPlatform extends PlatformInterface {
     ObjectDetectionOptions? objectDetectionOptions,
     PreferredResolution? preferredResolution,
     PreferredFrameRate? preferredFrameRate,
+    bool? useDepthCamera,
   });
 }

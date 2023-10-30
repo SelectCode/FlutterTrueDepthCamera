@@ -41,6 +41,8 @@ abstract class CameraController {
 
   PreferredFrameRate get preferredFrameRate;
 
+  bool get useDepthCamera;
+
   PreferredResolution get preferredResolution;
 
   /// Gets the calibration data of the current camera.

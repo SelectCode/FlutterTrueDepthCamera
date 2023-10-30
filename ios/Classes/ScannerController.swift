@@ -12,6 +12,7 @@ import SceneKit
 import VideoToolbox
 import CoreGraphics
 
+
 class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureFileOutputRecordingDelegate {
 
     private enum SessionSetupResult {
@@ -538,15 +539,17 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
     /// Sets up current capture session.
     private func configureSession() {
 
-        let resolver = DeviceConstraintResolver()
-        let resolveDeviceResult: (AVCaptureDevice, Format, AVFrameRateRange)? = resolver.solve()
+        let resolver = DeviceConstraintResolver(cameraOptions: cameraOptions)
+        let resolveDeviceResult: (AVCaptureDevice, AVCaptureDevice.Format, AVFrameRateRange)? = resolver.solve()
+        print("\(resolveDeviceResult)")
         guard let (videoDevice, format, frameRateRange) = resolveDeviceResult else {
             print("Could not find any video device.")
             return
         }
 
+        print("Formats: \(format.supportedDepthDataFormats)")
         canUseDepthCamera = !format.supportedDepthDataFormats.isEmpty
-        if(!canUseDepthCamera && cameraOptions.useDepthCamera) {
+        if (!canUseDepthCamera && cameraOptions.useDepthCamera) {
             print("Depth camera is not available.")
         }
 
@@ -578,8 +581,8 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
         do {
             try videoDevice.lockForConfiguration()
             videoDevice.activeFormat = format
-            videoDevice.activeVideoMinFrameDuration = frameRateRange!.minFrameDuration
-            videoDevice.activeVideoMaxFrameDuration = frameRateRange!.minFrameDuration
+            videoDevice.activeVideoMinFrameDuration = frameRateRange.minFrameDuration
+            videoDevice.activeVideoMaxFrameDuration = frameRateRange.minFrameDuration
 
             videoDevice.unlockForConfiguration()
         } catch {
@@ -695,34 +698,22 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 class DeviceConstraintResolver {
     private let cameraOptions: CameraOptions!
 
-    func solve() -> (AVCaptureDevice, Format, AVFrameRateRange)? {
+    init(cameraOptions: CameraOptions!) {
+        self.cameraOptions = cameraOptions
+    }
+
+    func solve() -> (AVCaptureDevice, AVCaptureDevice.Format, AVFrameRateRange)? {
         let devices = solveForLensDirection()
-
-        var bestDevice: AVCaptureDevice?
         var bestFrameRateDiff = Int.max
-        var discoveredFrameRate: Int?
-
-        let filteredDevices: [AVCaptureDevice] = []
+        var result: (AVCaptureDevice, AVCaptureDevice.Format, AVFrameRateRange)?
         for device in devices {
-            if(!cameraOptions.useDepthCamera) {
-                filteredDevices.append(device)
-                continue
-            }
             for format in device.formats {
                 let filtered = format.supportedDepthDataFormats.filter({
                     CMFormatDescriptionGetMediaSubType($0.formatDescription) == kCVPixelFormatType_DepthFloat16
                 })
-                if(filtered.isEmpty) {
+                if (filtered.isEmpty && cameraOptions.useDepthCamera) {
                     continue;
                 }
-                filteredDevices.append(device)
-                break
-            }
-        }
-        var bestFrameRateDiff = Int.max
-        var result: (AVCaptureDevice, Format, AVFrameRateRange)?
-        for device in filteredDevices {
-            for format in device.formats {
                 for range in format.videoSupportedFrameRateRanges {
                     let frameRate = Int(range.maxFrameRate)
                     let frameRateDiff = abs(frameRate - cameraOptions.preferredFrameRate.frameRate())

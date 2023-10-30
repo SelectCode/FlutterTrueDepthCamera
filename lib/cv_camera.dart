@@ -16,6 +16,7 @@ abstract class CvCamera {
     ObjectDetectionOptions? objectDetectionOptions,
     PreferredResolution? preferredResolution,
     PreferredFrameRate? preferredFrameRate,
+    bool? useDepthCamera,
   }) =>
       CvCameraPlatform.instance.getCameraController(
         lensDirection: lensDirection,
@@ -23,5 +24,6 @@ abstract class CvCamera {
         objectDetectionOptions: objectDetectionOptions,
         preferredFrameRate: preferredFrameRate,
         preferredResolution: preferredResolution,
+        useDepthCamera: useDepthCamera,
       );
 }

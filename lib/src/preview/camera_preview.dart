@@ -35,6 +35,7 @@ class _CameraPreviewState extends State<CameraPreview> {
           widget.controller.objectDetectionOptions.toJson(),
       "preferredResolution": widget.controller.preferredResolution.name,
       "preferredFrameRate": widget.controller.preferredFrameRate.name,
+      "useDepthCamera": widget.controller.useDepthCamera,
     };
 
     return Stack(
