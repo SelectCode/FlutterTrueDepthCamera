@@ -537,75 +537,17 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
     /// Sets up current capture session.
     private func configureSession() {
-        var position: AVCaptureDevice.Position
-        var deviceTypes: [AVCaptureDevice.DeviceType]
-        print(cameraOptions)
-        // Determine which lensDirection should be used and set the [deviceTypes] accordingly.
-        switch (cameraOptions.lensDirection) {
-        case .front: position = .front
-            if #available(iOS 11.1, *) {
-                deviceTypes = [.builtInTrueDepthCamera]
-            } else {
-                print("iOS 11.1 or higher is required for front camera")
-                deviceTypes = [.builtInWideAngleCamera]
-            }
-        case .back: position = .back
-            // only use lidar when ios version is greater or equal to 15.4
 
-            if #available(iOS 15.4, *) {
-                deviceTypes = [.builtInLiDARDepthCamera, .builtInDualCamera, .builtInTripleCamera, .builtInWideAngleCamera, .builtInDualWideCamera]
-            } else {
-                print("iOS 15.4 or higher is required for usage of LiDAR")
-                if #available(iOS 13.0, *) {
-                    deviceTypes = [.builtInDualCamera, .builtInTripleCamera, .builtInWideAngleCamera, .builtInDualWideCamera]
-                } else {
-                    print("Encountered unsupported ios version 😇")
-                    deviceTypes = []
-                }
-            }
-
-        }
-        let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes,
-                mediaType: .video,
-                position: position);
-
-
-        if setupResult != .success {
-            return
-        }
-
-        let captureDevices: [AVCaptureDevice] = videoDeviceDiscoverySession.devices
-
-        var currentFrameRate: PreferredFrameRate? = cameraOptions.preferredFrameRate
-        var videoDevice: AVCaptureDevice?
-        while videoDevice == nil && currentFrameRate != nil {
-            videoDevice = filterDevices(captureDevices: captureDevices, preferredFrameRate: currentFrameRate!)
-            if videoDevice == nil {
-                currentFrameRate = currentFrameRate!.previous()
-            }
-        }
-
-        guard let currentFrameRate = currentFrameRate, let videoDevice = videoDevice else {
+        let resolver = DeviceConstraintResolver()
+        let resolveDeviceResult: (AVCaptureDevice, Format, AVFrameRateRange)? = resolver.solve()
+        guard let (videoDevice, format, frameRateRange) = resolveDeviceResult else {
             print("Could not find any video device.")
             return
         }
 
-
-        if currentFrameRate != cameraOptions.preferredFrameRate {
-            print("Could not find any video device matching the preferred framerate. Using \(currentFrameRate) instead")
-        }
-
-        canUseDepthCamera = videoDevice.activeDepthDataFormat != nil
-
-
-        guard let format = videoDevice.formats.filter({
-                    $0.videoSupportedFrameRateRanges.contains(where: { Int($0.maxFrameRate) >= cameraOptions.preferredFrameRate.frameRate() })
-                })
-                .first
-        else {
-            print("No video device format found for framerate \(cameraOptions.preferredFrameRate.frameRate())")
-            setupResult = .configurationFailed
-            return
+        canUseDepthCamera = !format.supportedDepthDataFormats.isEmpty
+        if(!canUseDepthCamera && cameraOptions.useDepthCamera) {
+            print("Depth camera is not available.")
         }
 
         do {
@@ -635,19 +577,9 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
         do {
             try videoDevice.lockForConfiguration()
-            var bestFrameRateRange: AVFrameRateRange?
-            for range in format.videoSupportedFrameRateRanges {
-                print(range)
-                if (bestFrameRateRange == nil) {
-                    bestFrameRateRange = range
-                } else if range.maxFrameRate > bestFrameRateRange!.maxFrameRate {
-                    bestFrameRateRange = range
-                }
-            }
-            print(bestFrameRateRange!.minFrameDuration)
             videoDevice.activeFormat = format
-            videoDevice.activeVideoMinFrameDuration = bestFrameRateRange!.minFrameDuration
-            videoDevice.activeVideoMaxFrameDuration = bestFrameRateRange!.minFrameDuration
+            videoDevice.activeVideoMinFrameDuration = frameRateRange!.minFrameDuration
+            videoDevice.activeVideoMaxFrameDuration = frameRateRange!.minFrameDuration
 
             videoDevice.unlockForConfiguration()
         } catch {
@@ -759,3 +691,93 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
         }
     }
 }
+
+class DeviceConstraintResolver {
+    private let cameraOptions: CameraOptions!
+
+    func solve() -> (AVCaptureDevice, Format, AVFrameRateRange)? {
+        let devices = solveForLensDirection()
+
+        var bestDevice: AVCaptureDevice?
+        var bestFrameRateDiff = Int.max
+        var discoveredFrameRate: Int?
+
+        let filteredDevices: [AVCaptureDevice] = []
+        for device in devices {
+            if(!cameraOptions.useDepthCamera) {
+                filteredDevices.append(device)
+                continue
+            }
+            for format in device.formats {
+                let filtered = format.supportedDepthDataFormats.filter({
+                    CMFormatDescriptionGetMediaSubType($0.formatDescription) == kCVPixelFormatType_DepthFloat16
+                })
+                if(filtered.isEmpty) {
+                    continue;
+                }
+                filteredDevices.append(device)
+                break
+            }
+        }
+        var bestFrameRateDiff = Int.max
+        var result: (AVCaptureDevice, Format, AVFrameRateRange)?
+        for device in filteredDevices {
+            for format in device.formats {
+                for range in format.videoSupportedFrameRateRanges {
+                    let frameRate = Int(range.maxFrameRate)
+                    let frameRateDiff = abs(frameRate - cameraOptions.preferredFrameRate.frameRate())
+                    if frameRateDiff < bestFrameRateDiff {
+                        bestFrameRateDiff = frameRateDiff
+                        result = (device, format, range)
+                    }
+                }
+            }
+        }
+
+        return result
+    }
+
+    func solveForLensDirection() -> [AVCaptureDevice] {
+        var position: AVCaptureDevice.Position
+        var deviceTypes: [AVCaptureDevice.DeviceType]
+        // Determine which lensDirection should be used and set the [deviceTypes] accordingly.
+        switch (cameraOptions.lensDirection) {
+        case .front: position = .front
+            if #available(iOS 11.1, *) {
+                if (cameraOptions.useDepthCamera) {
+                    deviceTypes = [.builtInTrueDepthCamera]
+                } else {
+                    deviceTypes = [.builtInWideAngleCamera]
+                }
+            } else {
+                print("iOS 11.1 or higher is required for front camera")
+                deviceTypes = []
+            }
+        case .back: position = .back
+            // only use lidar when ios version is greater or equal to 15.4
+
+            if #available(iOS 15.4, *) {
+                if (cameraOptions.useDepthCamera) {
+                    deviceTypes = [.builtInLiDARDepthCamera]
+                } else {
+                    deviceTypes = [.builtInDualCamera, .builtInTripleCamera, .builtInWideAngleCamera, .builtInDualWideCamera]
+                }
+            } else {
+                if #available(iOS 13.0, *) {
+                    deviceTypes = [.builtInDualCamera, .builtInTripleCamera, .builtInWideAngleCamera, .builtInDualWideCamera]
+                } else {
+                    print("Encountered unsupported ios version 😇")
+                    deviceTypes = []
+                }
+            }
+
+        }
+        let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes,
+                mediaType: .video,
+                position: position);
+
+
+        return videoDeviceDiscoverySession.devices
+    }
+}
+
