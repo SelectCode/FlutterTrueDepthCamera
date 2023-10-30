@@ -42,6 +42,7 @@ class _MyAppState extends State<MyApp> {
       preferredResolution: PreferredResolution.x1920x1080,
       lensDirection: LensDirection.back,
       preferredFrameRate: PreferredFrameRate.fps240,
+      useDepthCamera: false,
     );
     _shootEffectController = CameraShootEffectController();
     // setUpStream();
@@ -63,12 +64,12 @@ class _MyAppState extends State<MyApp> {
   Future<void> shareFaceIdData(
       TakePictureResult result, BuildContext context) async {
     print('writing to file');
-    // final filepath = await writePlyFile(result.faceIdSensorData!);
+    final filepath = await writePlyFile(result.faceIdSensorData!);
     final bytes = ImageBuilder.fromCameraImage(result.cameraImage).asJpg();
     final imagePath = await writeImageFile(bytes);
 
     await ShareExtend.shareMultiple([
-      // filepath,
+      filepath,
       imagePath,
     ], 'file');
     showCopiedToClipboardNotification(context);

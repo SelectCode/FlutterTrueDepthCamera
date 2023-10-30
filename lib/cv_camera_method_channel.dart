@@ -28,6 +28,7 @@ class MethodChannelCvCamera extends CvCameraPlatform {
     PreferredResolution? preferredResolution,
     PreferredFrameRate? preferredFrameRate,
     Clock? clock,
+    bool? useDepthCamera,
   }) {
     return CameraControllerImpl(
       lensDirection: lensDirection,
@@ -39,6 +40,7 @@ class MethodChannelCvCamera extends CvCameraPlatform {
       objectDetectionOptions: objectDetectionOptions,
       preferredFrameRate: preferredFrameRate ?? PreferredFrameRate.fps30,
       preferredResolution: preferredResolution ?? PreferredResolution.x640x480,
+      useDepthCamera: useDepthCamera ?? false,
     );
   }
 }

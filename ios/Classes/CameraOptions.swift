@@ -1,6 +1,7 @@
 struct CameraOptions {
     let lensDirection: LensDirection;
     let enableDistortionCorrection: Bool;
+    let useDepthCamera: Bool;
     let objectDetectionOptions: ObjectDetectionOptions;
     let preferredFrameRate: PreferredFrameRate;
     let preferredResolution: PreferredResolution;

@@ -227,6 +227,7 @@ class FLNativeView: NSObject, FlutterPlatformView {
         return CameraOptions(
                 lensDirection: lensDirection,
                 enableDistortionCorrection: enableDistortionCorrection,
+                useDepthCamera: args["useDepthCamera"] as! Bool,
                 objectDetectionOptions: objectDetectionRange,
                 preferredFrameRate: preferredFrameRate,
                 preferredResolution: preferredResolution
