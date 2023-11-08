@@ -40,7 +40,7 @@ class MethodChannelCvCamera extends CvCameraPlatform {
       objectDetectionOptions: objectDetectionOptions,
       preferredFrameRate: preferredFrameRate ?? PreferredFrameRate.fps30,
       preferredResolution: preferredResolution ?? PreferredResolution.x640x480,
-      useDepthCamera: useDepthCamera ?? false,
+      useDepthCamera: useDepthCamera ?? true,
     );
   }
 }
