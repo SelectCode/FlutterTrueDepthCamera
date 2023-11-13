@@ -241,8 +241,8 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
 
             if (self.onObjectCoverageChange != nil) {
                 self.objectDetectionQueue.async {
-                    let width = CVPixelBufferGetWidth(videoPixelBuffer)
-                    let height = CVPixelBufferGetHeight(videoPixelBuffer)
+                    let width = CVPixelBufferGetWidth(depthData.depthDataMap)
+                    let height = CVPixelBufferGetHeight(depthData.depthDataMap)
                     let result = self.checkForObject(depthValues: depthValues, width: width, height: height)
                     if (self.onObjectCoverageChange != nil) {
                         self.onObjectCoverageChange!(result)
@@ -384,15 +384,13 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
         }
 
 
-        let faceIdData = convertRGBDtoXYZ(colorImage: cgColorImage, depthValues: depthValues, depthWidth: depthWidth, cameraCalibrationData: cameraCalibrationData)
-        print("Converted RGBD to XYZ.")
+        let faceIdData = convertRGBDtoXYZ(colorImage: cgColorImage, depthValues: depthValues, depthWidth: depthWidth, depthHeight: depthHeight, cameraCalibrationData: cameraCalibrationData)
         if (copiedFaceIdSensorDataCallback != nil) {
             copiedFaceIdSensorDataCallback!(faceIdData)
         }
         if (copiedSnapshotCallback != nil) {
             copiedSnapshotCallback!(faceIdData, decodeNativeCameraImage(getNativeCameraImage(sampleBuffer: sampleBuffer)))
         }
-        print("Finished processing frame.")
 
     }
 
@@ -505,7 +503,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
         NativeCameraImage(planes: decodePlanes(planes: encoded["planes"] as! [NSDictionary]), height: encoded["height"] as! Int, width: encoded["width"] as! Int)
     }
 
-    func convertRGBDtoXYZ(colorImage: CGImage, depthValues: [Float32], depthWidth: Int, cameraCalibrationData: AVCameraCalibrationData) -> FaceIdData {
+    func convertRGBDtoXYZ(colorImage: CGImage, depthValues: [Float32], depthWidth: Int, depthHeight: Int, cameraCalibrationData: AVCameraCalibrationData) -> FaceIdData {
 
         var intrinsics = cameraCalibrationData.intrinsicMatrix
         let referenceDimensions = cameraCalibrationData.intrinsicMatrixReferenceDimensions
@@ -532,7 +530,7 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
             return [x, y, z]
         }
 
-        return FaceIdData(XYZ: xyz, RGB: rgb, depthValues: depthValues, width: Int32(colorImage.width), height: Int32(colorImage.height), cameraCalibrationData: cameraCalibrationData)
+        return FaceIdData(XYZ: xyz, RGB: rgb, depthValues: depthValues, width: Int32(depthWidth), height: Int32(depthHeight), cameraCalibrationData: cameraCalibrationData)
     }
 
 
