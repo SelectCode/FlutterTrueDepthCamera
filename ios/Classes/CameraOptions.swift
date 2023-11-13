@@ -66,4 +66,22 @@ enum PreferredFrameRate {
 
 enum PreferredResolution {
     case x1920x1080, x640x480
+
+    func width() -> Int {
+        switch self {
+        case .x1920x1080:
+            return 1920;
+        case .x640x480:
+            return 640;
+        }
+    }
+
+    func height() -> Int {
+        switch self {
+        case .x1920x1080:
+            return 1080;
+        case .x640x480:
+            return 480;
+        }
+    }
 }

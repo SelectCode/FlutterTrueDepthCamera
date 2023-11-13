@@ -703,6 +703,7 @@ class DeviceConstraintResolver {
     func solve() -> (AVCaptureDevice, AVCaptureDevice.Format, AVFrameRateRange)? {
         let devices = solveForLensDirection()
         var bestFrameRateDiff = Int.max
+        var bestResolutionDiff = Int.max
         var result: (AVCaptureDevice, AVCaptureDevice.Format, AVFrameRateRange)?
         for device in devices {
             for format in device.formats {
@@ -712,18 +713,34 @@ class DeviceConstraintResolver {
                 if (filtered.isEmpty && cameraOptions.useDepthCamera) {
                     continue;
                 }
+                // Calculate resolution difference
+                let resolution = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+                let resolutionDiff = calculateResolutionDifference(cameraOptions.preferredResolution, resolution)
+
+
+                var bestRange: AVFrameRateRange?
                 for range in format.videoSupportedFrameRateRanges {
                     let frameRate = Int(range.maxFrameRate)
                     let frameRateDiff = abs(frameRate - cameraOptions.preferredFrameRate.frameRate())
                     if frameRateDiff < bestFrameRateDiff {
                         bestFrameRateDiff = frameRateDiff
-                        result = (device, format, range)
+                        bestRange = range
                     }
                 }
+
+                if resolutionDiff <= bestResolutionDiff && bestRange != nil {
+                    bestResolutionDiff = resolutionDiff
+                    result = (device, format, bestRange!)
+                }
+
             }
         }
 
         return result
+    }
+
+    func calculateResolutionDifference(_ preferred: PreferredResolution, _ actual: CMVideoDimensions) -> Int {
+        return abs(preferred.width() - Int(actual.width)) + abs(preferred.height() - Int(actual.height))
     }
 
     func solveForLensDirection() -> [AVCaptureDevice] {
