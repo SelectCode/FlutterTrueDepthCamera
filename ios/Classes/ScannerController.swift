@@ -669,11 +669,14 @@ class ScannerController: NSObject, AVCaptureDataOutputSynchronizerDelegate, AVCa
         }
     }
 
-    func startMovieRecording(
-
-    ) {
+    func startMovieRecording() {
         let filePath = NSTemporaryDirectory() + "tempMovie.mov"
         let outputURL = URL(fileURLWithPath: filePath)
+        do {
+            try FileManager.default.removeItem(at: outputURL)
+        } catch let error {
+            print("Could not remove file: \(error)")
+        }
         movieOutput.startRecording(to: outputURL, recordingDelegate: self)
     }
 
